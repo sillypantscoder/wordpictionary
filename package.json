@@ -1,0 +1,22 @@
+{
+  "name": "wordpictionary",
+  "version": "1.0.0",
+  "description": "A game where you draw pictures to go with words, and write words to go with pictures.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sillypantscoder/wordpictionary.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sillypantscoder/wordpictionary/issues"
+  },
+  "homepage": "https://github.com/sillypantscoder/wordpictionary#readme",
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}

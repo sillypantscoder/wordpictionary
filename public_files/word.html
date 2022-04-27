@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Voting</title>
+		<link href="style.css" rel="stylesheet" type="text/css" />
+		<link rel="icon" type="image/x-icon" href="word.ico">
+	</head>
+	<body>
+		<div class="inactive first">
+			<div>
+				<div class="wordheader">What word does this picture describe?</div>
+			</div>
+			<div>
+				<img src="/last_photo.svg">
+			</div>
+			<div>
+				<input type="text" id="word"><button onclick="submit()">Submit</button>
+			</div>
+		</div>
+		<script>
+			window.addEventListener("load", (e) => {
+				g("body > div.first").classList.remove("inactive")
+			})
+			function g(css) { return document.querySelector(css); }
+			function submit() {
+				var x = new XMLHttpRequest()
+				x.open("POST", "submit_word")
+				x.setRequestHeader("Content-Type", "application/json")
+				x.addEventListener("loadend", (e) => { parent.window.location.replace("/waitnext") })
+				x.send(JSON.stringify({
+					word: g("#word").value
+				}))
+			}
+			function heartbeat() {
+				var x = new XMLHttpRequest()
+				x.open("GET", "refresh")
+				x.send()
+			}
+			setInterval(heartbeat, 1000)
+		</script>
+	</body>
+</html>
