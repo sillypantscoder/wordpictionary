@@ -197,6 +197,84 @@ def get(path):
 \t</body>
 </html>"""
 		}
+	elif path == "/results": #                    /results
+		r = """<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Results</title>
+\t\t<style>
+.wordheader {
+\tbackground-color: red;
+\tfont-weight: bold;
+\tfont-size: 1.5em;
+\tpadding: 0.3em;
+\tborder-radius: 0.3em;
+\tmargin: 1em 0;
+}
+img {
+\tmax-width: 25em;
+}
+\t\t</style>
+\t\t<link rel="icon" type="image/x-icon" href="results.ico">
+\t</head>
+\t<body>"""
+		for i in range(len(submits)):
+			r += f"""\t\t<div class="wordheader">{submits[i]["word"]}</div>
+\t\t<img src="/getphoto/{i}">"""
+		r += """\t</body></html>"""
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/html"
+			},
+			"content": r
+		}
+	elif path.startswith("/getphoto/"): #         /getphoto/<int>
+		i = int(path[10:])
+		if i >= len(submits):
+			return {
+				"status": 404,
+				"headers": {
+					"Content-Type": "text/plain"
+				},
+				"content": "Not found"
+			}
+		else:
+			r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
+\t<style>
+\t\tpath{fill:none;stroke:black;stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;}</style>
+\t<g style="transform: translate(10px, 10px);">"""
+			img = submits[i]["img"]
+			for i in img:
+				r += f"""\t\t<path d="{i}" />"""
+			r += """\t</g></svg>"""
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "image/svg+xml"
+				},
+				"content": r
+			}
+	elif path == "/results_jbdf": #                /results_jbdf
+		r = """<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Results</title>
+\t</head>
+\t<body style="white-space: pre;"><script>
+\t\t\tvar r = "AP\""""
+		for i in submits:
+			r += f'\n\t\t\tr += "\\n" + btoa("{i["word"]}")' + "".join([f'\n\t\t\tr += "*" + btoa("{path}")' for path in i["img"]])
+		r += """\n\t\t\tdocument.body.textContent = r
+\t\t</script></body>
+</html>"""
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/html"
+			},
+			"content": r
+		}
 	else: # 									404 page
 		return {
 			"status": 404,
