@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import os
 import threading
 import datetime
 
@@ -17,6 +18,12 @@ serverPort = 8080
 
 def read_file(filename):  
 	f = open(filename, "r")
+	t = f.read()
+	f.close()
+	return t
+
+def bin_read_file(filename):  
+	f = open(filename, "rb")
 	t = f.read()
 	f.close()
 	return t
@@ -111,14 +118,6 @@ def get(path):
 				},
 				"content": read_file("public_files/draw.html")
 			}
-	elif path == "/style.css": #                  /style.css
-		return {
-			"status": 200,
-			"headers": {
-				"Content-Type": "text/css"
-			},
-			"content": read_file("public_files/style.css")
-		}
 	elif path == "/last_photo.svg": #             /last_photo.svg
 		r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
 \t<style>
@@ -164,14 +163,6 @@ def get(path):
 \t</body>
 </html>"""
 			}
-	elif path == "/wait.css": #                   /wait.css
-		return {
-			"status": 200,
-			"headers": {
-				"Content-Type": "text/css"
-			},
-			"content": read_file("public_files/wait.css")
-		}
 	elif path == "/last_word": #                  /last_word
 		return {
 			"status": 200,
@@ -325,13 +316,20 @@ img {
 \t</body>
 </html>"""
 			}
-	else: # 									404 page
+	else: # 									404 page / public files
+		public_files = os.listdir("public_files")
+		if path[1:] in public_files:
+			return {
+				"status": 200,
+				"headers": {},
+				"content": bin_read_file(f"public_files/{path}")
+			}
 		return {
 			"status": 404,
 			"headers": {
 				"Content-Type": "text/html"
 			},
-			"content": f"<html><head><title>Task Manager</title></head>\n<body>\n\
+			"content": f"<html><head><title>Word Pictionary</title></head>\n<body>\n\
 <h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
 \n</body></html>"
 		}
@@ -359,7 +357,7 @@ def post(path, body):
 			"headers": {
 				"Content-Type": "text/html"
 			},
-			"content": f"<html><head><title>Task Manager</title></head>\n<body>\n\
+			"content": f"<html><head><title>Word Pictionary</title></head>\n<body>\n\
 <h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
 \n</body></html>"
 		}
@@ -371,7 +369,9 @@ class MyServer(BaseHTTPRequestHandler):
 		for h in res["headers"]:
 			self.send_header(h, res["headers"][h])
 		self.end_headers()
-		self.wfile.write(res["content"].encode("utf-8"))
+		c = res["content"]
+		if type(c) == str: c = c.encode("utf-8")
+		self.wfile.write(c)
 	def do_POST(self):
 		content_len = int(self.headers.get('Content-Length'))
 		post_body = self.rfile.read(content_len).decode("utf-8")
