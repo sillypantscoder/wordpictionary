@@ -1,6 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import threading
+import datetime
 
 drawingProgress = 0
 submits = [
@@ -9,6 +10,7 @@ submits = [
 		"img": ["M 0 0 L 500 0 L 500 500 Z", "M 250 250 L 0 500 L 250 500 Z"]
 	}
 ]
+drawingTime: datetime.datetime = datetime.datetime.now()
 
 hostName = "localhost"
 serverPort = 8080
@@ -26,6 +28,7 @@ def write_file(filename, content):
 
 def get(path):
 	global drawingProgress
+	global drawingTime
 	if path == "/": #                             / -> /wait
 		return {
 			"status": 302,
@@ -66,7 +69,7 @@ def get(path):
 \t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 \t</head>
 \t<body>
-\t\tWaiting for other players...
+\t\tWaiting for other players...""" + ('<br>\n\t\t<a href="/recover">Recover</a>' if ((datetime.datetime.now() - drawingTime).total_seconds() >= 2) else '') + """
 \t</body>
 </html>"""
 			}
@@ -275,6 +278,53 @@ img {
 			},
 			"content": r
 		}
+	elif path == "/refresh": #                    /refresh
+		drawingTime = datetime.datetime.now()
+		return {
+			"status": 200,
+			"headers": {},
+			"content": ""
+		}
+	elif path == "/recover": #                     /recover
+		if drawingProgress == 1:
+			drawingProgress -= 1
+			# Recovering word.html
+			return {
+				"status": 302,
+				"headers": {
+					"Location": "/word.html"
+				},
+				"content": ""
+			}
+		elif drawingProgress == 3:
+			drawingProgress -= 1
+			# Recovering draw.html
+			return {
+				"status": 302,
+				"headers": {
+					"Location": "/draw.html"
+				},
+				"content": ""
+			}
+		else:
+			return {
+				"status": 404,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": """<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Waiting</title>
+\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
+\t\t<script>setTimeout(() => { location.replace("/wait") }, 5000)</script>
+\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
+\t</head>
+\t<body>
+\t\tNothing to recover
+\t</body>
+</html>"""
+			}
 	else: # 									404 page
 		return {
 			"status": 404,
