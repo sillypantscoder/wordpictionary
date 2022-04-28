@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import threading
 
 drawingProgress = 0
 submits = [
@@ -27,7 +28,7 @@ def get(path):
 	global drawingProgress
 	if path == "/": #                             / -> /wait
 		return {
-			"status": 301,
+			"status": 302,
 			"headers": {
 				"Location": "/wait"
 			},
@@ -36,7 +37,7 @@ def get(path):
 	if path == "/wait": #                         /wait
 		if drawingProgress == 0:
 			return {
-				"status": 301,
+				"status": 302,
 				"headers": {
 					"Location": "/word.html"
 				},
@@ -44,7 +45,7 @@ def get(path):
 			}
 		elif drawingProgress == 2:
 			return {
-				"status": 301,
+				"status": 302,
 				"headers": {
 					"Location": "/draw.html"
 				},
@@ -71,9 +72,9 @@ def get(path):
 			}
 	elif path == "/word.html": #                  /word.html
 		if drawingProgress:
-			drawingProgress = 1
+			#drawingProgress = 1
 			return {
-				"status": 303,
+				"status": 302,
 				"headers": {
 					"Location": "/wait"
 				},
@@ -92,7 +93,7 @@ def get(path):
 		if drawingProgress != 2:
 			drawingProgress = 3
 			return {
-				"status": 303,
+				"status": 302,
 				"headers": {
 					"Location": "/wait"
 				},
@@ -135,7 +136,7 @@ def get(path):
 	elif path == "/waitnext": #                   /waitnext
 		if drawingProgress in [1, 3]:
 			return {
-				"status": 301,
+				"status": 302,
 				"headers": {
 					"Location": "/wait"
 				},
@@ -168,6 +169,34 @@ def get(path):
 			},
 			"content": read_file("public_files/wait.css")
 		}
+	elif path == "/last_word": #                  /last_word
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/plain"
+			},
+			"content": submits[-1]["word"]
+		}
+	elif path == "/thanks": #                     /thanks
+		drawingProgress = 0
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/html"
+			},
+			"content": """<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Waiting</title>
+\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
+\t\t<script>setTimeout(() => { location.replace("/waitnext") }, 5000)</script>
+\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
+\t</head>
+\t<body>
+\t\tSubmitted!
+\t</body>
+</html>"""
+		}
 	else: # 									404 page
 		return {
 			"status": 404,
@@ -181,9 +210,16 @@ def get(path):
 
 def post(path, body):
 	global drawingProgress
-	if path == "/submit_word": #				  /submitword
+	if path == "/submit_word": #				  /submit_word
 		submits.append({ "word": json.loads(body)["word"], "img": [] })
 		drawingProgress = 2
+		return {
+			"status": 200,
+			"headers": {},
+			"content": ""
+		}
+	elif path == "/submit_drawing": #			  /submit_drawing
+		submits[-1]["img"] = json.loads(body)["p"]
 		return {
 			"status": 200,
 			"headers": {},
@@ -225,12 +261,23 @@ class MyServer(BaseHTTPRequestHandler):
 		print(u"\u001b[0m", end="")
 		# don't output requests
 
+def async_showstate():
+	print()
+	while running:
+		print("Current state: " + str(drawingProgress) + " - " + ["Waiting for word", "Word", "Waiting for draw", "Drawing"][drawingProgress])
+		prevDrawingProgress = drawingProgress
+		iters = 0
+		while drawingProgress == prevDrawingProgress and iters < 10000 and running: iters += 0.001
+
 if __name__ == "__main__":
+	running = True
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	print("Server started http://%s:%s" % (hostName, serverPort))
+	#threading.Thread(target=async_showstate).start()
 	try:
 		webServer.serve_forever()
 	except KeyboardInterrupt:
 		pass
 	webServer.server_close()
 	print("Server stopped.")
+	running = False
