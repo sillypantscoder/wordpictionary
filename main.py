@@ -4,7 +4,13 @@ import games
 hostName = "localhost"
 serverPort = 8080
 
-game = games.Game()
+activeGames: "list[games.Game]" = [
+	games.Game(),
+	games.Game(),
+	games.Game(),
+	games.Game(),
+	games.Game()
+]
 
 def read_file(filename):  
 	f = open(filename, "r")
@@ -25,7 +31,11 @@ def write_file(filename, content):
 
 class MyServer(BaseHTTPRequestHandler):
 	def do_GET(self):
-		res = game.get(self.path)
+		if self.path == "/": return
+		gameno = int(self.path.split("/")[1])
+		game = activeGames[gameno]
+		path = self.path.split("/")[2]
+		res = game.get("/" + path, gameno)
 		self.send_response(res["status"])
 		for h in res["headers"]:
 			self.send_header(h, res["headers"][h])
@@ -34,9 +44,11 @@ class MyServer(BaseHTTPRequestHandler):
 		if type(c) == str: c = c.encode("utf-8")
 		self.wfile.write(c)
 	def do_POST(self):
-		content_len = int(self.headers.get('Content-Length'))
-		post_body = self.rfile.read(content_len).decode("utf-8")
-		res = game.post(self.path, post_body)
+		if self.path == "/": return
+		gameno = int(self.path.split("/")[1])
+		game = activeGames[gameno]
+		path = self.path.split("/")[2]
+		res = game.post("/" + path, self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8"), gameno)
 		self.send_response(res["status"])
 		for h in res["headers"]:
 			self.send_header(h, res["headers"][h])

@@ -29,12 +29,12 @@ class Game:
 			}
 		]
 		self.drawingTime: datetime.datetime = datetime.datetime.now()
-	def get(self, path):
+	def get(self, path, gameno):
 		if path == "/": #                             / -> /wait
 			return {
 				"status": 302,
 				"headers": {
-					"Location": "/wait"
+					"Location": f"/{gameno}/wait"
 				},
 				"content": ""
 			}
@@ -43,7 +43,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/word.html"
+						"Location": f"/{gameno}/word.html"
 					},
 					"content": ""
 				}
@@ -51,7 +51,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/draw.html"
+						"Location": f"/{gameno}/draw.html"
 					},
 					"content": ""
 				}
@@ -70,7 +70,7 @@ class Game:
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
-	\t\tWaiting for other players...""" + ('<br>\n\t\t<a href="/recover">Recover</a>' if ((datetime.datetime.now() - self.drawingTime).total_seconds() >= 2) else '') + """
+	\t\tWaiting for other players...""" + ('<br>\n\t\t<a href="recover">Recover</a>' if ((datetime.datetime.now() - self.drawingTime).total_seconds() >= 2) else '') + """
 	\t</body>
 	</html>"""
 				}
@@ -80,7 +80,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/wait"
+						"Location": f"/{gameno}/wait"
 					},
 					"content": ""
 				}
@@ -99,7 +99,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/wait"
+						"Location": f"/{gameno}/wait"
 					},
 					"content": ""
 				}
@@ -134,7 +134,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/wait"
+						"Location": f"/{gameno}/wait"
 					},
 					"content": ""
 				}
@@ -177,7 +177,7 @@ class Game:
 	\t<head>
 	\t\t<title>Waiting</title>
 	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.replace("/waitnext") }, 5000)</script>
+	\t\t<script>setTimeout(() => { location.replace("/""" + str(gameno) + """/waitnext") }, 5000)</script>
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
@@ -277,7 +277,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/word.html"
+						"Location": f"/{gameno}/word.html"
 					},
 					"content": ""
 				}
@@ -287,7 +287,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": "/draw.html"
+						"Location": f"/{gameno}/draw.html"
 					},
 					"content": ""
 				}
@@ -302,7 +302,7 @@ class Game:
 	\t<head>
 	\t\t<title>Waiting</title>
 	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.replace("/wait") }, 5000)</script>
+	\t\t<script>setTimeout(() => { location.replace("/""" + str(gameno) + """/wait") }, 5000)</script>
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
@@ -327,10 +327,9 @@ class Game:
 	<h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
 	\n</body></html>"
 			}
-	def post(self, path, body):
-		submits = self.submits
+	def post(self, path, body, gameno):
 		if path == "/submit_word": #				  /submit_word
-			submits.append({ "word": json.loads(body)["word"], "img": [] })
+			self.submits.append({ "word": json.loads(body)["word"], "img": [] })
 			self.drawingProgress = 2
 			return {
 				"status": 200,
@@ -338,7 +337,7 @@ class Game:
 				"content": ""
 			}
 		elif path == "/submit_drawing": #			  /submit_drawing
-			submits[-1]["img"] = json.loads(body)["p"]
+			self.submits[-1]["img"] = json.loads(body)["p"]
 			return {
 				"status": 200,
 				"headers": {},
