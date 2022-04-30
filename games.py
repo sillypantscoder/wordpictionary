@@ -187,28 +187,29 @@ class Game:
 			}
 		elif path == "/results": #                    /results
 			r = """<!DOCTYPE html>
-	<html>
-	\t<head>
-	\t\t<title>Results</title>
-	\t\t<style>
-	.wordheader {
-	\tbackground-color: red;
-	\tfont-weight: bold;
-	\tfont-size: 1.5em;
-	\tpadding: 0.3em;
-	\tborder-radius: 0.3em;
-	\tmargin: 1em 0;
-	}
-	img {
-	\tmax-width: 25em;
-	}
-	\t\t</style>
-	\t\t<link rel="icon" type="image/x-icon" href="results.ico">
-	\t</head>
-	\t<body>"""
+<html>
+\t<head>
+\t\t<title>Results</title>
+\t\t<style>
+.wordheader {
+\tbackground-color: red;
+\tfont-weight: bold;
+\tfont-size: 1.5em;
+\tpadding: 0.3em;
+\tborder-radius: 0.3em;
+\tmargin: 1em 0;
+}
+img {
+\tmax-width: 25em;
+}
+\t\t</style>
+\t\t<script>setTimeout(() => { location.reload() }, 5000)</script>
+\t\t<link rel="icon" type="image/x-icon" href="results.ico">
+\t</head>
+\t<body>"""
 			for i in range(len(self.submits)):
 				r += f"""\t\t<div class="wordheader">{self.submits[i]["word"]}</div>
-	\t\t<img src="/getphoto/{i}">"""
+\t\t<img src="getphoto/{i}">"""
 			r += """\t</body></html>"""
 			return {
 				"status": 200,
