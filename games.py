@@ -1,6 +1,5 @@
 import json
 import os
-import datetime
 
 def read_file(filename):  
 	f = open(filename, "r")
@@ -28,7 +27,6 @@ class Game:
 				"img": ["M 0 0 L 500 0 L 500 500 Z", "M 250 250 L 0 500 L 250 500 Z"]
 			}
 		]
-		self.drawingTime: datetime.datetime = datetime.datetime.now()
 	def get(self, path, gameno):
 		if path == "/": #                             / -> /wait
 			return {
@@ -70,7 +68,7 @@ class Game:
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
-	\t\tWaiting for other players...""" + ('<br>\n\t\t<a href="recover">Recover</a>' if ((datetime.datetime.now() - self.drawingTime).total_seconds() >= 2) else '') + """
+	\t\tWaiting for other players...
 	\t</body>
 	</html>"""
 				}
@@ -263,13 +261,6 @@ img {
 					"Content-Type": "text/html"
 				},
 				"content": r
-			}
-		elif path == "/refresh": #                    /refresh
-			drawingTime = datetime.datetime.now()
-			return {
-				"status": 200,
-				"headers": {},
-				"content": ""
 			}
 		elif path == "/recover": #                     /recover
 			if self.drawingProgress == 1:
