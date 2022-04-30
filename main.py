@@ -39,7 +39,28 @@ def get(path):
 			"headers": {
 				"Content-Type": "text/html"
 			},
-			"content": """<!DOCTYPE html>
+			"content": ("""<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Word Pictionary</title>
+\t\t<style>
+iframe {
+\twidth: 60vh;
+\theight: 50em;
+\tborder: none;
+\toutline: 0.05em solid #000;
+}
+\t\t</style>
+\t</head>
+\t<body>
+\t\t<h1>Word Pictionary - Results</h1>
+\t\t<iframe src="/0/results"></iframe>
+\t\t<iframe src="/1/results"></iframe>
+\t\t<iframe src="/2/results"></iframe>
+\t\t<iframe src="/3/results"></iframe>
+\t\t<iframe src="/4/results"></iframe>
+\t</body>
+</html>""" if show_results else """<!DOCTYPE html>
 <html>
 \t<head>
 \t\t<title>Word Pictionary</title>
@@ -60,36 +81,7 @@ iframe {
 \t\t<iframe src="/3/"></iframe>
 \t\t<iframe src="/4/"></iframe>
 \t</body>
-</html>"""
-		}
-	elif path == "/results":
-		return {
-			"status": 200,
-			"headers": {
-				"Content-Type": "text/html"
-			},
-			"content": """<!DOCTYPE html>
-<html>
-\t<head>
-\t\t<title>Word Pictionary</title>
-\t\t<style>
-iframe {
-\twidth: 60vh;
-\theight: 50em;
-\tborder: none;
-\toutline: 0.05em solid #000;
-}
-\t\t</style>
-\t</head>
-\t<body>
-\t\t<h1>Word Pictionary</h1>
-\t\t<iframe src="/0/results"></iframe>
-\t\t<iframe src="/1/results"></iframe>
-\t\t<iframe src="/2/results"></iframe>
-\t\t<iframe src="/3/results"></iframe>
-\t\t<iframe src="/4/results"></iframe>
-\t</body>
-</html>"""
+</html>""")
 		}
 	elif path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
@@ -152,6 +144,7 @@ class MyServer(BaseHTTPRequestHandler):
 
 def async_pygame():
 	global running
+	global show_results
 	pygame.font.init()
 	screensize = [500, 500]
 	screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
@@ -162,25 +155,39 @@ def async_pygame():
 	running = True
 	c = pygame.time.Clock()
 	while running:
+		clickpos = []
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				running = False
 			elif event.type == pygame.VIDEORESIZE:
 				screensize = event.size
 				screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
+			elif event.type == pygame.MOUSEBUTTONUP:
+				clickpos.append(event.pos)
 		# Drawing
 		screen.fill((255, 255, 255))
 		for i in range(len(activeGames)):
 			r = font.render(f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})", True, (0, 0, 0))
 			screen.blit(r, (0, i * fontheight))
+			resultsrect = r.get_rect().move(0, i * fontheight)
+			for p in clickpos:
+				if resultsrect.collidepoint(*p):
+					activeGames[i].drawingProgress -= 1
 		r = font.render(f"Close this window to stop the server", True, (0, 0, 0))
 		screen.blit(r, (0, (i + 2) * fontheight))
+		r = font.render(f"Show results: {'Yes' if show_results else 'No'}", True, (0, 0, 0))
+		screen.blit(r, (0, (i + 3) * fontheight))
+		resultsrect = r.get_rect().move(0, (i + 3) * fontheight)
+		for p in clickpos:
+			if resultsrect.collidepoint(*p):
+				show_results = not show_results
 		# Flip
 		pygame.display.flip()
 		c.tick(60)
 
 if __name__ == "__main__":
 	running = True
+	show_results = False
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
