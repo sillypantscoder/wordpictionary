@@ -11,9 +11,7 @@ body > div {
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	align-items: stretch;
-	max-width: 25em;
-	transition: max-width 0.5s, opacity 0.5s;
+	align-items: center;
 	overflow: hidden;
 }
 .wordheader {
@@ -24,21 +22,15 @@ body > div {
 	border-radius: 0.3em;
 	margin: 1em 0;
 }
-body > div.inactive, body > div.completed {
-	opacity: 0.3;
-}
-body > div.inactive {
-	max-width: 0;
-}
-body > div.completed {
-	max-width: 35vw;
-}
-#iframeDiv {
+.main > div {
 	flex-grow: 1;
-}
-#iframeDiv iframe {
 	width: 100%;
+}
+img {
+	max-height: 60vh;
 	height: 100%;
+	max-width: 100%;
+	min-width: 10em;
 }
 
 
