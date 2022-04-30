@@ -103,7 +103,7 @@ iframe {
 def post(path, body):
 	if path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
-		print(f"POST to game {path.split('/')[1]} at /{gamepath}")
+		#print(f"POST to game {path.split('/')[1]} at /{gamepath}")
 		gameno = int(path.split("/")[1])
 		game = activeGames[gameno]
 		res = game.post("/" + gamepath, body, gameno)
@@ -149,6 +149,7 @@ def async_pygame():
 	screensize = [500, 500]
 	screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
 	pygame.display.set_caption("Word Pictionary")
+	pygame.display.set_icon(pygame.image.load("window.ico"))
 	font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
 	fontheight = font.render("0", True, (0, 0, 0)).get_height()
 	# Main loop
@@ -173,6 +174,7 @@ def async_pygame():
 			for p in clickpos:
 				if resultsrect.collidepoint(*p):
 					activeGames[i].drawingProgress -= 1
+					if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
 		r = font.render(f"Close this window to stop the server", True, (0, 0, 0))
 		screen.blit(r, (0, (i + 2) * fontheight))
 		r = font.render(f"Show results: {'Yes' if show_results else 'No'}", True, (0, 0, 0))
