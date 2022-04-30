@@ -1,6 +1,8 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import games
 from sys import stdout
+import pygame
+import threading
 
 hostName = "localhost"
 serverPort = 8080
@@ -91,9 +93,9 @@ iframe {
 		}
 	elif path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
-		if gamepath == "refresh": print(f"[R{path.split('/')[1]}]", end="")
-		else: print(f"Request to game {path.split('/')[1]} at /{gamepath}")
-		stdout.flush()
+		#if gamepath == "refresh": print(f"[R{path.split('/')[1]}]", end="")
+		#else: print(f"Request to game {path.split('/')[1]} at /{gamepath}")
+		#stdout.flush()
 		gameno = int(path.split("/")[1])
 		game = activeGames[gameno]
 		res = game.get("/" + gamepath, gameno)
@@ -148,15 +150,45 @@ class MyServer(BaseHTTPRequestHandler):
 		print(u"\u001b[0m", end="")
 		# don't output requests
 
+def async_pygame():
+	global running
+	pygame.font.init()
+	screensize = [500, 500]
+	screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
+	pygame.display.set_caption("Word Pictionary")
+	font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
+	fontheight = font.render("0", True, (0, 0, 0)).get_height()
+	# Main loop
+	running = True
+	c = pygame.time.Clock()
+	while running:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				running = False
+			elif event.type == pygame.VIDEORESIZE:
+				screensize = event.size
+				screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
+		# Drawing
+		screen.fill((255, 255, 255))
+		for i in range(len(activeGames)):
+			r = font.render(f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})", True, (0, 0, 0))
+			screen.blit(r, (0, i * fontheight))
+		r = font.render(f"Close this window to stop the server", True, (0, 0, 0))
+		screen.blit(r, (0, (i + 2) * fontheight))
+		# Flip
+		pygame.display.flip()
+		c.tick(60)
+
 if __name__ == "__main__":
 	running = True
 	webServer = HTTPServer((hostName, serverPort), MyServer)
+	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
-	#threading.Thread(target=game.async_showstate).start()
-	try:
-		webServer.serve_forever()
-	except KeyboardInterrupt:
-		pass
+	threading.Thread(target=async_pygame).start()
+	while running:
+		try:
+			webServer.handle_request()
+		except KeyboardInterrupt:
+			running = False
 	webServer.server_close()
 	print("Server stopped.")
-	running = False
