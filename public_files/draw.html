@@ -36,6 +36,9 @@ div.menubar {
 	padding: 0.0625em 0.3em;
 	margin: 0.25em;
 }
+.menubar > span {
+	cursor: auto;
+}
 .wordheader {
 	background: red;
 	font-weight: bold;
@@ -44,85 +47,74 @@ div.menubar {
 .wordheader, .wordheader div {
 	display: inline-block;
 }
+path {
+	fill: none;
+	stroke: black;
+	stroke-width: 1px;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+select {
+	border: none;
+	background: white;
+	font: 400 1em sans-serif;
+	cursor: pointer;
+}
 		</style>
 		<link rel="icon" type="image/x-icon" href="draw.ico">
 	</head>
 	<body>
 		<div class="window">
-			<svg id="theSVG" xmlns="http://www.w3.org/svg">
-				<rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" onclick="click(event)" />
+			<svg id="theSVG" xmlns="http://www.w3.org/svg" onmousedown="mousedown(event)" onmousemove="mousemove(event)" onmouseup="mouseup(event)">
+				<rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" />
+				<g id="drawingContent"></g>
 			</svg>
 		</div>
 		<div class="menubar">
 			<div class="wordheader">Draw: <div id="word">???</div></div>
 			<button id="undobtn" onclick="undo()">Undo</button>
 			<button onclick="submit()">Submit</button>
+			<span>Mode:
+				<select id=mode><option selected>Line</option><option>Draw</option></select>
+			</span>
 		</div>
 		<script>
 			function g(css) { return document.querySelector(css); }
 			var paths = []
-			var path = []
-			function undo() {
-				if (path.length > 0) {
-					path.pop()
-				} else if (paths.length > 0) {
-					paths.pop()
-				}
-				updateScreen()
+			var currentPath = []
+			function mousedown(event) {
+				currentPath = ["M " + event.clientX + " " + event.clientY]
 			}
-			function click(e) {
-				if (e.target.nodeName == "circle") {
-					return;
-				}
-				if (path.length == 0) {
-					path.push(`M ${e.x} ${e.y}`)
+			function mousemove(event) {
+				if (g("#mode").value == "Draw") {
+					if (currentPath.length > 0) {
+						currentPath.push("L " + event.clientX + " " + event.clientY)
+						updateScreen()
+					}
 				} else {
-					path.push(` L ${e.x} ${e.y}`)
+					if (currentPath.length == 1) {
+						currentPath.push("L " + event.clientX + " " + event.clientY)
+						updateScreen()
+					} else if (currentPath.length == 2) {
+						currentPath[1] = "L " + event.clientX + " " + event.clientY
+						updateScreen()
+					}
 				}
-				updateScreen()
+			}
+			function mouseup(event) {
+				if (currentPath.length) {
+					//currentPath.push("Z")
+					paths.push(currentPath.join(" "))
+					currentPath = []
+					updateScreen()
+				}
 			}
 			function updateScreen() {
-				// outer rectangle
-				var r = `<g onclick="click(event)"><rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" />`
-				// previous paths
-				for (let i = 0; i < paths.length; i++) {
-					const n = paths[i];
-					if ((i == paths.length-1) && (path.length == 0)) {
-						r += `<path d="${n}" fill="none" stroke="#050" stroke-width="10" />`
-					} else {
-						r += `<path d="${n}" fill="none" stroke="black" stroke-width="10" />`
-					}
-				}
-				// active path
-				r += `<path d="`
-				for (let i = 0; i < path.length; i++) {
-					const n = path[i];
-					r += n
-				}
-				r += `" fill="none" stroke="#500" stroke-width="10" />`
-				// active path circles
-				for (let i = 0; i < path.length; i++) {
-					const n = path[i];
-					var coords = n.match(/\d+ \d+/ig)[0].split(' ')
-					if (i == 0) {
-						r += `<circle cx="${coords[0]}" cy="${coords[1]}" r="20" fill="black" stroke="none" onclick="closePath()" />`
-					} else if (i == path.length-1) {
-						r += `<circle cx="${coords[0]}" cy="${coords[1]}" r="20" fill="black" stroke="none" onclick="finishPath()" />`
-					} else {
-						r += `<circle cx="${coords[0]}" cy="${coords[1]}" r="20" fill="black" stroke="none" />`
-					}
-				}
-				r += "</g>"
-				g("#theSVG").innerHTML = r
+				g("#drawingContent").innerHTML = "<path d='" + paths.join(" ") + "' /><path d='" + currentPath.join(" ") + "' style='stroke: red;' />"
 			}
-			function finishPath() {
-				paths.push(path.join(""))
-				path = []
+			function undo() {
+				paths.pop()
 				updateScreen()
-			}
-			function closePath() {
-				path.push(" Z")
-				finishPath()
 			}
 			function submit() {
 				var x = new XMLHttpRequest()
@@ -137,12 +129,6 @@ div.menubar {
 			x.open("GET", "last_word")
 			x.addEventListener("loadend", (e) => { g("#word").textContent = e.target.responseText })
 			x.send()
-			function heartbeat() {
-				var x = new XMLHttpRequest()
-				x.open("GET", "refresh")
-				x.send()
-			}
-			setInterval(heartbeat, 1000)
 		</script>
 	</body>
 </html>
