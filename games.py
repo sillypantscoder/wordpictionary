@@ -113,7 +113,7 @@ class Game:
 		elif path == "/last_photo.svg": #             /last_photo.svg
 			r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
 	\t<style>
-	\t\tpath{fill:none;stroke:black;stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;}</style>
+	\t\tpath{fill:none;stroke:black;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}</style>
 	\t<g style="transform: translate(10px, 10px);">"""
 			img = self.submits[-1]["img"]
 			for i in img:
@@ -201,7 +201,6 @@ img {
 \tmax-width: 25em;
 }
 \t\t</style>
-\t\t<script>setTimeout(() => { location.reload() }, 5000)</script>
 \t\t<link rel="icon" type="image/x-icon" href="results.ico">
 \t</head>
 \t<body>"""
@@ -229,7 +228,7 @@ img {
 			else:
 				r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
 	\t<style>
-	\t\tpath{fill:none;stroke:black;stroke-width:10px;stroke-linecap:round;stroke-linejoin:round;}</style>
+	\t\tpath{fill:none;stroke:black;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}</style>
 	\t<g style="transform: translate(10px, 10px);">"""
 				img = self.submits[i]["img"]
 				for i in img:
