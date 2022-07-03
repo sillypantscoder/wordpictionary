@@ -7,12 +7,9 @@ import threading
 hostName = "localhost"
 serverPort = 8080
 
+numberOfGames = 7
 activeGames: "list[games.Game]" = [
-	games.Game(),
-	games.Game(),
-	games.Game(),
-	games.Game(),
-	games.Game()
+	games.Game() for g in range(numberOfGames)
 ]
 
 def read_file(filename):  
@@ -54,11 +51,7 @@ iframe {
 \t</head>
 \t<body>
 \t\t<h1>Word Pictionary - Results</h1>
-\t\t<iframe src="/0/results"></iframe>
-\t\t<iframe src="/1/results"></iframe>
-\t\t<iframe src="/2/results"></iframe>
-\t\t<iframe src="/3/results"></iframe>
-\t\t<iframe src="/4/results"></iframe>
+""" + ''.join([f'\t\t<iframe src="/{g}/results"></iframe>' for g in range(numberOfGames)]) + """
 \t</body>
 </html>""" if show_results else """<!DOCTYPE html>
 <html>
@@ -75,11 +68,7 @@ iframe {
 \t</head>
 \t<body>
 \t\t<h1>Word Pictionary</h1>
-\t\t<iframe src="/0/"></iframe>
-\t\t<iframe src="/1/"></iframe>
-\t\t<iframe src="/2/"></iframe>
-\t\t<iframe src="/3/"></iframe>
-\t\t<iframe src="/4/"></iframe>
+""" + ''.join([f'\t\t<iframe src="/{g}/"></iframe>' for g in range(numberOfGames)]) + """
 \t</body>
 </html>""")
 		}
@@ -167,6 +156,7 @@ def async_pygame():
 				clickpos.append(event.pos)
 		# Drawing
 		screen.fill((255, 255, 255))
+		# LIST OF GAMES
 		for i in range(len(activeGames)):
 			r = font.render(f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})", True, (0, 0, 0))
 			screen.blit(r, (0, i * fontheight))
@@ -175,11 +165,22 @@ def async_pygame():
 				if resultsrect.collidepoint(*p):
 					activeGames[i].drawingProgress -= 1
 					if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
-		r = font.render(f"Close this window to stop the server", True, (0, 0, 0))
+		# DECREMENT ALL OPTION
+		r = font.render(f"Click to decrement all games' status", True, (0, 0, 0))
 		screen.blit(r, (0, (i + 2) * fontheight))
-		r = font.render(f"Show results: {'Yes' if show_results else 'No'}", True, (0, 0, 0))
+		resultsrect = r.get_rect().move(0, (i + 2) * fontheight)
+		for p in clickpos:
+			if resultsrect.collidepoint(*p):
+				for g in range(len(activeGames)):
+					activeGames[g].drawingProgress -= 1
+					if activeGames[g].drawingProgress < 0: activeGames[g].drawingProgress += 4
+		# CLOSE WINDOW MESSAGE
+		r = font.render(f"Close this window to stop the server", True, (0, 0, 0))
 		screen.blit(r, (0, (i + 3) * fontheight))
-		resultsrect = r.get_rect().move(0, (i + 3) * fontheight)
+		# SHOW RESULTS OPTION
+		r = font.render(f"Show results: {'Yes' if show_results else 'No'}", True, (0, 0, 0))
+		screen.blit(r, (0, (i + 4) * fontheight))
+		resultsrect = r.get_rect().move(0, (i + 4) * fontheight)
 		for p in clickpos:
 			if resultsrect.collidepoint(*p):
 				show_results = not show_results
