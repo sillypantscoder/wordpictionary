@@ -4,8 +4,8 @@ from sys import stdout
 import pygame
 import threading
 
-hostName = "localhost"
-serverPort = 8080
+hostName = "0.0.0.0"
+serverPort = 11233
 
 numberOfGames = 7
 activeGames: "list[games.Game]" = [
@@ -136,7 +136,7 @@ def async_pygame():
 	global show_results
 	pygame.font.init()
 	screensize = [500, 500]
-	screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
+	screen = pygame.Surface(screensize)
 	pygame.display.set_caption("Word Pictionary")
 	pygame.display.set_icon(pygame.image.load("window.ico"))
 	font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
@@ -185,7 +185,7 @@ def async_pygame():
 			if resultsrect.collidepoint(*p):
 				show_results = not show_results
 		# Flip
-		pygame.display.flip()
+		pygame.image.save(screen, "scrn.png")
 		c.tick(60)
 
 if __name__ == "__main__":
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
-	threading.Thread(target=async_pygame).start()
+	#threading.Thread(target=async_pygame).start()
 	while running:
 		try:
 			webServer.handle_request()
