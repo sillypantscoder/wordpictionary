@@ -170,7 +170,9 @@ def async_pygame():
 		if curchar == "s":
 			show_results = not show_results
 		# Flip
-		print(res + "\n============================================")
+		maxwidth = max([len(l) for l in res.split("\n")])
+		e = f"\n=={'=' * maxwidth}=="
+		print('\n'.join([f'| {l.ljust(maxwidth)} |' for l in res.split('\n')]) + e)
 		time.sleep(1)
 
 if __name__ == "__main__":
