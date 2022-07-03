@@ -3,6 +3,7 @@ import games
 from sys import stdout
 import pygame
 import threading
+import time
 
 hostName = "0.0.0.0"
 serverPort = 11233
@@ -169,9 +170,8 @@ def async_pygame():
 		if curchar == "s":
 			show_results = not show_results
 		# Flip
-		print(res)
-		for i in range(res.count("\n")):
-			print(u"\r\u001b[1A\r\u001b[2K")
+		print(res + "============================================")
+		time.sleep(1)
 
 if __name__ == "__main__":
 	running = True
