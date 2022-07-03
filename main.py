@@ -188,4 +188,4 @@ if __name__ == "__main__":
 		except KeyboardInterrupt:
 			running = False
 	webServer.server_close()
-	print("Server stopped.")
+	print("Server stopped - Press Enter to exit")

@@ -304,9 +304,12 @@ img {
 		else: # 									404 page / public files
 			public_files = os.listdir("public_files")
 			if path[1:] in public_files:
+				h = {}
+				if path.split(".")[-1] == "css":
+					h["Content-Type"] = "text/css"
 				return {
 					"status": 200,
-					"headers": {},
+					"headers": h,
 					"content": bin_read_file(f"public_files/{path}")
 				}
 			return {
