@@ -134,59 +134,45 @@ class MyServer(BaseHTTPRequestHandler):
 def async_pygame():
 	global running
 	global show_results
-	pygame.font.init()
-	screensize = [500, 500]
-	screen = pygame.Surface(screensize)
-	pygame.display.set_caption("Word Pictionary")
-	pygame.display.set_icon(pygame.image.load("window.ico"))
-	font = pygame.font.SysFont(pygame.font.get_default_font(), 20)
-	fontheight = font.render("0", True, (0, 0, 0)).get_height()
+	# Get char
+	chars = []
+	def getChar():
+		if len(chars) > 0:
+			return chars.pop()
+		else:
+			return ''
+	def async_get_chars():
+		while running:
+			chars.append(input())
+	threading.Thread(target=async_get_chars, name="pygame_get_chars_thread", args=[]).start()
 	# Main loop
 	running = True
-	c = pygame.time.Clock()
 	while running:
-		clickpos = []
-		for event in pygame.event.get():
-			if event.type == pygame.QUIT:
-				running = False
-			elif event.type == pygame.VIDEORESIZE:
-				screensize = event.size
-				screen = pygame.display.set_mode(screensize, pygame.RESIZABLE)
-			elif event.type == pygame.MOUSEBUTTONUP:
-				clickpos.append(event.pos)
-		# Drawing
-		screen.fill((255, 255, 255))
+		curchar = getChar()
+		res = ""
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
-			r = font.render(f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})", True, (0, 0, 0))
-			screen.blit(r, (0, i * fontheight))
+			res += f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})"
 			resultsrect = r.get_rect().move(0, i * fontheight)
-			for p in clickpos:
-				if resultsrect.collidepoint(*p):
-					activeGames[i].drawingProgress -= 1
-					if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
+			if curchar == str(i + 1):
+				activeGames[i].drawingProgress -= 1
+				if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
 		# DECREMENT ALL OPTION
-		r = font.render(f"Click to decrement all games' status", True, (0, 0, 0))
-		screen.blit(r, (0, (i + 2) * fontheight))
+		res += f"Click to decrement all games' status"
 		resultsrect = r.get_rect().move(0, (i + 2) * fontheight)
-		for p in clickpos:
-			if resultsrect.collidepoint(*p):
-				for g in range(len(activeGames)):
-					activeGames[g].drawingProgress -= 1
-					if activeGames[g].drawingProgress < 0: activeGames[g].drawingProgress += 4
+		if curchar == "d":
+			for g in range(len(activeGames)):
+				activeGames[g].drawingProgress -= 1
+				if activeGames[g].drawingProgress < 0: activeGames[g].drawingProgress += 4
 		# CLOSE WINDOW MESSAGE
-		r = font.render(f"Close this window to stop the server", True, (0, 0, 0))
-		screen.blit(r, (0, (i + 3) * fontheight))
+		res += f"Press Ctrl-C to stop the server"
 		# SHOW RESULTS OPTION
-		r = font.render(f"Show results: {'Yes' if show_results else 'No'}", True, (0, 0, 0))
-		screen.blit(r, (0, (i + 4) * fontheight))
+		res += f"Show results: {'Yes' if show_results else 'No'}"
 		resultsrect = r.get_rect().move(0, (i + 4) * fontheight)
-		for p in clickpos:
-			if resultsrect.collidepoint(*p):
-				show_results = not show_results
+		if curchar == "s":
+			show_results = not show_results
 		# Flip
-		pygame.image.save(screen, "scrn.png")
-		c.tick(60)
+		print(res)
 
 if __name__ == "__main__":
 	running = True
