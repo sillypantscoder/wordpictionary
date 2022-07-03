@@ -189,3 +189,8 @@ if __name__ == "__main__":
 			running = False
 	webServer.server_close()
 	print("Server stopped - Press Enter to exit")
+	print("JBDF results:")
+	for g in range(len(activeGames)):
+		res = activeGames[g].get_jbdf_content()
+		print(f"GAME {g + 1} - {res}\n")
+
