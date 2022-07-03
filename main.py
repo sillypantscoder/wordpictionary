@@ -153,13 +153,11 @@ def async_pygame():
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
 			res += f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})"
-			resultsrect = r.get_rect().move(0, i * fontheight)
 			if curchar == str(i + 1):
 				activeGames[i].drawingProgress -= 1
 				if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
 		# DECREMENT ALL OPTION
 		res += f"Click to decrement all games' status"
-		resultsrect = r.get_rect().move(0, (i + 2) * fontheight)
 		if curchar == "d":
 			for g in range(len(activeGames)):
 				activeGames[g].drawingProgress -= 1
@@ -168,7 +166,6 @@ def async_pygame():
 		res += f"Press Ctrl-C to stop the server"
 		# SHOW RESULTS OPTION
 		res += f"Show results: {'Yes' if show_results else 'No'}"
-		resultsrect = r.get_rect().move(0, (i + 4) * fontheight)
 		if curchar == "s":
 			show_results = not show_results
 		# Flip
@@ -180,7 +177,7 @@ if __name__ == "__main__":
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
-	#threading.Thread(target=async_pygame).start()
+	threading.Thread(target=async_pygame).start()
 	while running:
 		try:
 			webServer.handle_request()
