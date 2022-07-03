@@ -152,24 +152,26 @@ def async_pygame():
 		res = ""
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
-			res += f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})"
+			res += f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})\n"
 			if curchar == str(i + 1):
 				activeGames[i].drawingProgress -= 1
 				if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
 		# DECREMENT ALL OPTION
-		res += f"Click to decrement all games' status"
+		res += f"\nType 'd' to decrement all games' status\n"
 		if curchar == "d":
 			for g in range(len(activeGames)):
 				activeGames[g].drawingProgress -= 1
 				if activeGames[g].drawingProgress < 0: activeGames[g].drawingProgress += 4
 		# CLOSE WINDOW MESSAGE
-		res += f"Press Ctrl-C to stop the server"
+		res += f"Press Ctrl-C to stop the server\n"
 		# SHOW RESULTS OPTION
 		res += f"Show results: {'Yes' if show_results else 'No'}"
 		if curchar == "s":
 			show_results = not show_results
 		# Flip
 		print(res)
+		for i in range(res.count("\n")):
+			print(u"\r\u001b[1A\r\u001b[2K")
 
 if __name__ == "__main__":
 	running = True
