@@ -149,7 +149,7 @@ def async_pygame():
 	# Main loop
 	running = True
 	while running:
-		curchar = getChar()
+		curchar = getChar().lower()
 		res = ""
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
