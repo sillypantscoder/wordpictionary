@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Drawing widget</title>
+		<style>
+html {
+	height: 100%;
+	font-size: 2.5em;
+}
+body {
+	display: flex;
+	margin: 0;
+	height: 100%;
+	flex-direction: column;
+}
+div.window {
+	flex-grow: 3;
+	display: flex;
+}
+#theSVG {
+	flex-grow: 1;
+	height: 100vw;
+	max-height: 80vh;
+}
+div.menubar {
+	flex-grow: 1;
+	background: linear-gradient(180deg, #999 0%, transparent 10em);
+	padding: 1em;
+}
+.menubar > * {
+	border: none;
+	background: white;
+	color: black;
+	font: 400 1em sans-serif;
+	cursor: pointer;
+	box-shadow: -0.25em 0.25em black;
+	padding: 0.0625em 0.3em;
+	margin: 0.25em;
+}
+.wordheader {
+	background: red;
+	font-weight: bold;
+	cursor: auto;
+}
+.wordheader, .wordheader div {
+	display: inline-block;
+}
+		</style>
+		<link rel="icon" type="image/x-icon" href="draw.ico">
+	</head>
+	<body>
+		<div class="window">
+			<svg id="theSVG" xmlns="http://www.w3.org/svg">
+				<rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" onclick="click(event)" />
+			</svg>
+		</div>
+		<div class="menubar">
+			<div class="wordheader">Draw: <div id="word">???</div></div>
+			<button id="undobtn" onclick="undo()">Undo</button>
+			<button onclick="submit()">Submit</button>
+			<button onclick="location.replace('recover')">Back to desktop version</button>
+			<br>Tap to create points. Tap the last point to finish the path, or tap the first point to close the path.
+		</div>
+		<script>
+			function g(css) { return document.querySelector(css); }
+			var paths = []
+			var path = []
+			function undo() {
+				if (path.length > 0) {
+					path.pop()
+				} else if (paths.length > 0) {
+					paths.pop()
+				}
+				updateScreen()
+			}
+			function click(e) {
+				if (e.target.nodeName == "circle") {
+					return;
+				}
+				if (path.length == 0) {
+					path.push(`M ${e.x} ${e.y}`)
+				} else {
+					path.push(` L ${e.x} ${e.y}`)
+				}
+				updateScreen()
+			}
+			function updateScreen() {
+				// outer rectangle
+				var r = `<g onclick="click(event)"><rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" />`
+				// previous paths
+				for (let i = 0; i < paths.length; i++) {
+					const n = paths[i];
+					if ((i == paths.length-1) && (path.length == 0)) {
+						r += `<path d="${n}" fill="none" stroke="#050" stroke-width="10" />`
+					} else {
+						r += `<path d="${n}" fill="none" stroke="black" stroke-width="10" />`
+					}
+				}
+				// active path
+				r += `<path d="`
+				for (let i = 0; i < path.length; i++) {
+					const n = path[i];
+					r += n
+				}
+				r += `" fill="none" stroke="#500" stroke-width="10" />`
+				// active path circles
+				for (let i = 0; i < path.length; i++) {
+					const n = path[i];
+					var coords = n.match(/\d+ \d+/ig)[0].split(' ')
+					if (i == 0) {
+						r += `<circle cx="${coords[0]}" cy="${coords[1]}" r="20" fill="black" stroke="none" onclick="closePath()" />`
+					} else if (i == path.length-1) {
+						r += `<circle cx="${coords[0]}" cy="${coords[1]}" r="20" fill="black" stroke="none" onclick="finishPath()" />`
+					} else {
+						r += `<circle cx="${coords[0]}" cy="${coords[1]}" r="20" fill="black" stroke="none" />`
+					}
+				}
+				r += "</g>"
+				g("#theSVG").innerHTML = r
+			}
+			function finishPath() {
+				paths.push(path.join(""))
+				path = []
+				updateScreen()
+			}
+			function closePath() {
+				path.push(" Z")
+				finishPath()
+			}
+			function submit() {
+				var x = new XMLHttpRequest()
+				x.open("POST", "submit_drawing")
+				x.setRequestHeader("Content-Type", "application/json")
+				x.addEventListener("loadend", (e) => { location.replace("thanks") })
+				x.send(JSON.stringify({
+					p: paths
+				}))
+			}
+			var x = new XMLHttpRequest()
+			x.open("GET", "last_word")
+			x.addEventListener("loadend", (e) => { g("#word").textContent = e.target.responseText })
+			x.send()
+		</script>
+	</body>
+</html>
