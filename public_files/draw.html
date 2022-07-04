@@ -63,7 +63,7 @@ select {
 		</style>
 		<link rel="icon" type="image/x-icon" href="draw.ico">
 	</head>
-	<body>
+	<body onscroll="event.preventDefault()">
 		<div class="window">
 			<svg id="theSVG" xmlns="http://www.w3.org/svg" onmousedown="mousedown(event)" onmousemove="mousemove(event)" onmouseup="mouseup(event)">
 				<rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" />
@@ -80,6 +80,8 @@ select {
 					<option selected>Draw</option>
 				</select>
 			</span>
+			<button onclick="location.replace('draw_mobile.html')" id="mobilebutton">Switch to mobile version</button>
+			<br>Click and drag to draw. Select line mode to draw lines.
 		</div>
 		<script>
 			function g(css) { return document.querySelector(css); }
@@ -89,6 +91,7 @@ select {
 				currentPath = ["M " + event.clientX + " " + event.clientY]
 			}
 			function mousemove(event) {
+				event.preventDefault()
 				if (g("#mode").value == "Draw") {
 					if (currentPath.length > 0) {
 						currentPath.push("L " + event.clientX + " " + event.clientY)
@@ -132,6 +135,11 @@ select {
 			x.open("GET", "last_word")
 			x.addEventListener("loadend", (e) => { g("#word").textContent = e.target.responseText })
 			x.send()
+			if(window.matchMedia("(pointer: none)").matches) {
+				if (confirm("You're on a mobile device. Switch to mobile drawing version?")) {
+					location.replace("draw_mobile.html")
+				}
+			}
 		</script>
 	</body>
 </html>
