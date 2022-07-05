@@ -48,7 +48,6 @@ class Game:
 			}
 		if path == "/check": #                        /check
 			if self.drawingProgress == 0:
-				print("--- SENT TO WORD ---")
 				return {
 					"status": 302,
 					"headers": {
@@ -57,7 +56,6 @@ class Game:
 					"content": ""
 				}
 			elif self.drawingProgress == 2:
-				print("--- SENT TO DRAW ---")
 				return {
 					"status": 302,
 					"headers": {
@@ -132,7 +130,7 @@ class Game:
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
-	\t\tSubmitted!
+	\t\tSubmitted!<br><br>
 	\t\t<button onclick="location.replace('/?from=""" + str(gameno) + """')">Continue</button>
 	\t</body>
 	</html>"""

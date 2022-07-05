@@ -59,7 +59,7 @@ def get(path, query):
 \t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 \t</head>
 \t<body>
-\t\tWaiting for other players...
+\t\tWaiting for other players...<br><br>
 \t\t<button onclick="location.reload()">Refresh</button>
 \t</body>
 </html>""")
