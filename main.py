@@ -33,17 +33,17 @@ def write_file(filename, content):
 
 def get(path, query):
 	if path == "/":
-		print(path)
-		for g in range(len(activeGames)):
-			if str(g) != query.get("from"):
-				if activeGames[g].drawingProgress in [0, 2]:
-					return {
-						"status": 303,
-						"headers": {
-							"Location": f"/{g}/check"
-						},
-						"content": ""
-					}
+		if allow_game_checking:
+			for g in range(len(activeGames)):
+				if str(g) != query.get("from"):
+					if activeGames[g].drawingProgress in [0, 2]:
+						return {
+							"status": 303,
+							"headers": {
+								"Location": f"/{g}/check"
+							},
+							"content": ""
+						}
 		# No available games...
 		return {
 			"status": 200,
@@ -187,6 +187,10 @@ def async_pygame():
 		res += f"(S) Show results: {'Yes' if show_results else 'No'}"
 		if curchar == "s":
 			show_results = not show_results
+		# GAME CHECKING OPTION
+		res += f"(G) Game checking: {'Yes' if allow_game_checking else 'No'}"
+		if curchar == "s":
+			allow_game_checking = not allow_game_checking
 		# Flip
 		maxwidth = max([len(l) for l in res.split("\n")])
 		e = f"\n=={'=' * maxwidth}=="
@@ -196,6 +200,7 @@ def async_pygame():
 if __name__ == "__main__":
 	running = True
 	show_results = False
+	allow_game_checking = True
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
