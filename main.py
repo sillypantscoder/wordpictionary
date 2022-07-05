@@ -32,6 +32,14 @@ def write_file(filename, content):
 
 def get(path):
 	if path == "/":
+		for g in range(len(activeGames)):
+			if activeGames[g].drawingProgress in [0, 2]:
+				return {
+					"status": 303,
+					"headers": {
+						"Location": f"/{g}/check"
+					}
+				}
 		return {
 			"status": 200,
 			"headers": {
@@ -40,36 +48,13 @@ def get(path):
 			"content": ("""<!DOCTYPE html>
 <html>
 \t<head>
-\t\t<title>Word Pictionary</title>
-\t\t<style>
-iframe {
-\twidth: 60vh;
-\theight: 50em;
-\tborder: none;
-\toutline: 0.05em solid #000;
-}
-\t\t</style>
+\t\t<title>Waiting</title>
+\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
+\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 20000)</script>
+\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 \t</head>
 \t<body>
-\t\t<h1>Word Pictionary - Results</h1>
-""" + ''.join([f'\t\t<iframe src="/{g}/results"></iframe>' for g in range(numberOfGames)]) + """
-\t</body>
-</html>""" if show_results else """<!DOCTYPE html>
-<html>
-\t<head>
-\t\t<title>Word Pictionary</title>
-\t\t<style>
-iframe {
-\twidth: 60vh;
-\theight: 50em;
-\tborder: none;
-\toutline: 0.05em solid #000;
-}
-\t\t</style>
-\t</head>
-\t<body>
-\t\t<h1>Word Pictionary</h1>
-""" + ''.join([f'\t\t<iframe src="/{g}/"></iframe>' for g in range(numberOfGames)]) + """
+\t\tWaiting for other players...
 \t</body>
 </html>""")
 		}
