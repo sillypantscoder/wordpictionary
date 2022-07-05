@@ -48,6 +48,7 @@ class Game:
 			}
 		if path == "/check": #                        /check
 			if self.drawingProgress == 0:
+				print("--- SENT TO WORD ---")
 				return {
 					"status": 302,
 					"headers": {
@@ -56,6 +57,7 @@ class Game:
 					"content": ""
 				}
 			elif self.drawingProgress == 2:
+				print("--- SENT TO DRAW ---")
 				return {
 					"status": 302,
 					"headers": {
