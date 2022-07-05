@@ -4,6 +4,7 @@ from sys import stdout
 import pygame
 import threading
 import time
+import os
 
 hostName = "0.0.0.0"
 serverPort = 11233
