@@ -59,7 +59,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": f"/{gameno}/drwa.html"
+						"Location": f"/{gameno}/draw.html"
 					},
 					"content": ""
 				}
@@ -106,34 +106,6 @@ class Game:
 				},
 				"content": r
 			}
-		elif path == "/waitnext": #                   /waitnext
-			if self.drawingProgress in [1, 3]:
-				return {
-					"status": 302,
-					"headers": {
-						"Location": f"/"
-					},
-					"content": ""
-				}
-			else:
-				return {
-					"status": 200,
-					"headers": {
-						"Content-Type": "text/html"
-					},
-					"content": """<!DOCTYPE html>
-	<html>
-	\t<head>
-	\t\t<title>Waiting</title>
-	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.reload() }, 5000)</script>
-	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
-	\t</head>
-	\t<body>
-	\t\tWaiting for the next player to start...
-	\t</body>
-	</html>"""
-				}
 		elif path == "/last_word": #                  /last_word
 			return {
 				"status": 200,
@@ -154,7 +126,7 @@ class Game:
 	\t<head>
 	\t\t<title>Waiting</title>
 	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.replace("/""" + str(gameno) + """/waitnext") }, 5000)</script>
+	\t\t<script>setTimeout(() => { location.replace("/") }, 5000)</script>
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
