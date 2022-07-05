@@ -126,7 +126,7 @@ class Game:
 	\t<head>
 	\t\t<title>Waiting</title>
 	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.replace("/") }, 5000)</script>
+	\t\t<script>setTimeout(() => { location.replace("/?from=""" + gameno + """") }, 5000)</script>
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>

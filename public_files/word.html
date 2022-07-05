@@ -23,7 +23,7 @@
 				var x = new XMLHttpRequest()
 				x.open("POST", "submit_word")
 				x.setRequestHeader("Content-Type", "application/json")
-				x.addEventListener("loadend", (e) => { window.location.replace("/") })
+				x.addEventListener("loadend", (e) => { window.location.replace("thanks") })
 				x.send(JSON.stringify({
 					word: g("#word").value
 				}))

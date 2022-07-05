@@ -30,16 +30,18 @@ def write_file(filename, content):
 	f.write(content)
 	f.close()
 
-def get(path):
+def get(path, query):
 	if path == "/":
+		print(path)
 		for g in range(len(activeGames)):
-			if activeGames[g].drawingProgress in [0, 2]:
-				return {
-					"status": 303,
-					"headers": {
-						"Location": f"/{g}/check"
+			if str(g) != query.get("from"):
+				if activeGames[g].drawingProgress in [0, 2]:
+					return {
+						"status": 303,
+						"headers": {
+							"Location": f"/{g}/check"
+						}
 					}
-				}
 		return {
 			"status": 200,
 			"headers": {
@@ -91,9 +93,22 @@ def post(path, body):
 			"content": "404"
 		}
 
+class URLQuery:
+	def __init__(self, q):
+		self.fields = {}
+		for f in q.split("&"):
+			s = f.split("=")
+			self.fields[s[0]] = s[1]
+	def get(self, key):
+		if key in self.fields:
+			return self.fields[key]
+		else:
+			return ''
+
 class MyServer(BaseHTTPRequestHandler):
 	def do_GET(self):
-		res = get(self.path)
+		splitpath = path.split("?")
+		res = get(splitpath[0], URLQuery(''.join(splitpath[1:])))
 		self.send_response(res["status"])
 		for h in res["headers"]:
 			self.send_header(h, res["headers"][h])
