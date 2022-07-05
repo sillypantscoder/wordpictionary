@@ -185,12 +185,12 @@ def async_pygame():
 		# CLOSE WINDOW MESSAGE
 		res += f"Press Ctrl-C then Enter to stop the server\n"
 		# SHOW RESULTS OPTION
-		res += f"(S) Show results: {'Yes' if show_results else 'No'}"
+		res += f"(S) Show results: {'Yes' if show_results else 'No'}\n"
 		if curchar == "s":
 			show_results = not show_results
 		# GAME CHECKING OPTION
 		res += f"(G) Game checking: {'Yes' if allow_game_checking else 'No'}"
-		if curchar == "s":
+		if curchar == "g":
 			allow_game_checking = not allow_game_checking
 		# Flip
 		maxwidth = max([len(l) for l in res.split("\n")])
