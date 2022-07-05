@@ -46,25 +46,31 @@ class Game:
 				},
 				"content": ""
 			}
-		if path == "/wait": #                         /wait
-			return {
-				"status": 200,
-				"headers": {
-					"Content-Type": "text/html"
-				},
-				"content": """<!DOCTYPE html>
-<html>
-\t<head>
-\t\t<title>Waiting</title>
-\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 20000)</script>
-\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
-\t</head>
-\t<body>
-\t\tWaiting for other players...
-\t</body>
-</html>"""
-			}
+		if path == "/check": #                        /check
+			if self.drawingProgress == 0:
+				return {
+					"status": 302,
+					"headers": {
+						"Location": f"/{gameno}/word.html"
+					},
+					"content": ""
+				}
+			elif self.drawingProgress == 2:
+				return {
+					"status": 302,
+					"headers": {
+						"Location": f"/{gameno}/drwa.html"
+					},
+					"content": ""
+				}
+			else:
+				return {
+					"status": 302,
+					"headers": {
+						"Location": f"/"
+					},
+					"content": ""
+				}
 		elif path == "/word.html": #                  /word.html
 			self.drawingProgress = 1
 			return {
