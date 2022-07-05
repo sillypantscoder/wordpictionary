@@ -153,6 +153,7 @@ class MyServer(BaseHTTPRequestHandler):
 def async_pygame():
 	global running
 	global show_results
+	global allow_game_checking
 	# Get char
 	chars = []
 	def getChar():
