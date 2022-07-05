@@ -22,7 +22,7 @@ def write_file(filename, content):
 
 class Game:
 	def __init__(self):
-		self.drawingProgress = 0
+		self.drawingProgress: int = 0
 		start_imgs = {
 			"Triangles": ["M 0 0 L 500 0 L 500 500 Z", "M 250 250 L 0 500 L 250 500 Z"],
 			"Circle with rectangle": ["M 250 0 A 1 1 0 0 0 250 500 A 1 1 0 0 0 250 0 Z M 200 50 L 300 50 L 300 450 L 200 450 Z"],
@@ -38,88 +38,51 @@ class Game:
 			}
 		]
 	def get(self, path, gameno):
-		if path == "/": #                             / -> /wait
+		if path == "/": #                             /
 			return {
 				"status": 302,
 				"headers": {
-					"Location": f"/{gameno}/wait"
+					"Location": f"/"
 				},
 				"content": ""
 			}
 		if path == "/wait": #                         /wait
-			if self.drawingProgress == 0:
-				return {
-					"status": 302,
-					"headers": {
-						"Location": f"/{gameno}/word.html"
-					},
-					"content": ""
-				}
-			elif self.drawingProgress == 2:
-				return {
-					"status": 302,
-					"headers": {
-						"Location": f"/{gameno}/draw.html"
-					},
-					"content": ""
-				}
-			else:
-				return {
-					"status": 200,
-					"headers": {
-						"Content-Type": "text/html"
-					},
-					"content": """<!DOCTYPE html>
-	<html>
-	\t<head>
-	\t\t<title>Waiting</title>
-	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 20000)</script>
-	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
-	\t</head>
-	\t<body>
-	\t\tWaiting for other players...
-	\t</body>
-	</html>"""
-				}
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": """<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Waiting</title>
+\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
+\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 20000)</script>
+\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
+\t</head>
+\t<body>
+\t\tWaiting for other players...
+\t</body>
+</html>"""
+			}
 		elif path == "/word.html": #                  /word.html
-			if self.drawingProgress:
-				#self.drawingProgress = 1
-				return {
-					"status": 302,
-					"headers": {
-						"Location": f"/{gameno}/wait"
-					},
-					"content": ""
-				}
-			else:
-				self.drawingProgress = 1
-				return {
-					"status": 200,
-					"headers": {
-						"Content-Type": "text/html"
-					},
-					"content": read_file("public_files/word.html")
-				}
+			self.drawingProgress = 1
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": read_file("public_files/word.html")
+			}
 		elif path == "/draw.html": #                  /draw.html
-			if self.drawingProgress != 2:
-				self.drawingProgress = 3
-				return {
-					"status": 302,
-					"headers": {
-						"Location": f"/{gameno}/wait"
-					},
-					"content": ""
-				}
-			else:
-				self.drawingProgress = 3
-				return {
-					"status": 200,
-					"headers": {
-						"Content-Type": "text/html"
-					},
-					"content": read_file("public_files/draw.html")
-				}
+			self.drawingProgress = 3
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": read_file("public_files/draw.html")
+			}
 		elif path == "/last_photo.svg": #             /last_photo.svg
 			r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
 	\t<style>
@@ -142,7 +105,7 @@ class Game:
 				return {
 					"status": 302,
 					"headers": {
-						"Location": f"/{gameno}/wait"
+						"Location": f"/"
 					},
 					"content": ""
 				}
