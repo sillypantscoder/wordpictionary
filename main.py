@@ -34,7 +34,7 @@ def get(path, query):
 	if path == "/":
 		print(path)
 		for g in range(len(activeGames)):
-			if not query.get("from"):
+			if str(g) != query.get("from"):
 				if activeGames[g].drawingProgress in [0, 2]:
 					return {
 						"status": 303,
