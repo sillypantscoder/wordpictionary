@@ -5,6 +5,7 @@ body {
 	display: flex;
 	margin: 0.5em;
 	height: calc(100% - 0.5em);
+	flex-direction: column;
 }
 body > div {
 	flex-grow: 1;

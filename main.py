@@ -33,24 +33,25 @@ def write_file(filename, content):
 
 def get(path, query):
 	if path == "/":
-		if allow_game_checking:
-			for g in range(len(activeGames)):
-				if str(g) != query.get("from"):
-					if activeGames[g].drawingProgress in [0, 2]:
-						return {
-							"status": 303,
-							"headers": {
-								"Location": f"/{g}/check"
-							},
-							"content": ""
-						}
-		# No available games...
-		return {
-			"status": 200,
-			"headers": {
-				"Content-Type": "text/html"
-			},
-			"content": ("""<!DOCTYPE html>
+		if not show_results:
+			if allow_game_checking:
+				for g in range(len(activeGames)):
+					if str(g) != query.get("from"):
+						if activeGames[g].drawingProgress in [0, 2]:
+							return {
+								"status": 303,
+								"headers": {
+									"Location": f"/{g}/check"
+								},
+								"content": ""
+							}
+			# No available games...
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": ("""<!DOCTYPE html>
 <html>
 \t<head>
 \t\t<title>Waiting</title>
@@ -63,7 +64,32 @@ def get(path, query):
 \t\t<button onclick="location.reload()">Refresh</button>
 \t</body>
 </html>""")
-		}
+			}
+		else:
+			# Display the results
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": """<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Word Pictionary - Results</title>
+\t\t<link href="style.css" rel="stylesheet" type="text/css" />
+\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
+\t\t<style>
+body {
+\tdisplay: block;
+}"""+f"""
+\t\t</style>
+\t</head>
+\t<body>
+\t\t<h1>Word Pictionary - Results</h1>
+{''.join([activeGames[x].get_results_html(x) for x in range(len(activeGames))])}
+\t</body>
+</html>"""
+			}
 	elif path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
 		#if gamepath == "refresh": print(f"[R{path.split('/')[1]}]", end="")

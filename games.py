@@ -306,3 +306,11 @@ img {
 			for path in i["img"]:
 				r += "*" + btoa(path)
 		return r
+	def get_results_html(self, gameno):
+		r = ""
+		for i in range(len(self.submits)):
+			s = self.submits[i]["word"]
+			if i == 0: s = f'GAME #{gameno}</div><div class="wordheader">{s}'
+			r += f"""\t\t<div class="wordheader">{s}</div>
+\t\t<img src="{gameno}/getphoto/{i}">"""
+		return r
