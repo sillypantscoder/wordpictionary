@@ -117,8 +117,8 @@ class Game:
 				"content": self.submits[-1]["word"]
 			}
 		elif path == "/thanks": #                     /thanks
-			self.drawingProgress += 1
-			if self.drawingProgress == 4: self.drawingProgress = 0
+			if self.drawingProgress == 1: self.drawingProgress = 2
+			if self.drawingProgress == 3: self.drawingProgress = 0
 			return {
 				"status": 200,
 				"headers": {
