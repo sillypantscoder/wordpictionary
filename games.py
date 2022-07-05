@@ -129,11 +129,11 @@ class Game:
 	\t<head>
 	\t\t<title>Waiting</title>
 	\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
-	\t\t<script>setTimeout(() => { location.replace("/?from=""" + str(gameno) + """") }, 5000)</script>
 	\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 	\t</head>
 	\t<body>
 	\t\tSubmitted!
+	\t\t<button onclick="location.replace('/?from=""" + str(gameno) + """')">Continue</button>
 	\t</body>
 	</html>"""
 			}

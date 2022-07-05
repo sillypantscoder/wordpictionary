@@ -43,6 +43,7 @@ def get(path, query):
 						},
 						"content": ""
 					}
+		# No available games...
 		return {
 			"status": 200,
 			"headers": {
@@ -58,6 +59,7 @@ def get(path, query):
 \t</head>
 \t<body>
 \t\tWaiting for other players...
+\t\t<button onclick="location.reload()">Refresh</button>
 \t</body>
 </html>""")
 		}
