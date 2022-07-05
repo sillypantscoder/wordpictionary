@@ -238,9 +238,11 @@ if __name__ == "__main__":
 		except KeyboardInterrupt:
 			running = False
 	webServer.server_close()
-	print("Server stopped - Press Enter to exit")
-	print("JBDF results:")
+	print("Server stopped")
+	print("JBDF results:\n\nAP")
 	for g in range(len(activeGames)):
-		res = activeGames[g].get_jbdf_content()
-		print(f"GAME {g + 1} - {res}\n")
+		res = activeGames[g].get_jbdf_content(g)
+		print(res[1:])
+	print("\nPress Enter to exit...")
+
 

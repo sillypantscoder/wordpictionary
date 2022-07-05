@@ -294,14 +294,18 @@ img {
 	<h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
 	\n</body></html>"
 			}
-	def get_jbdf_content(self):
+	def get_jbdf_content(self, gameno):
 		def btoa(message):
 			message_bytes = message.encode('ascii')
 			base64_bytes = base64.b64encode(message_bytes)
 			base64_message = base64_bytes.decode('ascii')
 			return base64_message
-		r = "AP"
-		for i in self.submits:
+		r = ""
+		i = self.submits[0]
+		r += "\n" + btoa(f"[GAME # {gameno}] {i['word']}")
+		for path in i["img"]:
+			r += "*" + btoa(path)
+		for i in self.submits[1:]:
 			r += "\n" + btoa(i["word"])
 			for path in i["img"]:
 				r += "*" + btoa(path)
@@ -314,3 +318,4 @@ img {
 			r += f"""\t\t<div class="wordheader">{s}</div>
 \t\t<img src="{gameno}/getphoto/{i}">"""
 		return r
+
