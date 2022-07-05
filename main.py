@@ -34,7 +34,7 @@ def get(path, query):
 	if path == "/":
 		print(path)
 		for g in range(len(activeGames)):
-			if str(g) != query.get("from"):
+			if not query.get("from"):
 				if activeGames[g].drawingProgress in [0, 2]:
 					return {
 						"status": 303,
@@ -107,7 +107,7 @@ class URLQuery:
 
 class MyServer(BaseHTTPRequestHandler):
 	def do_GET(self):
-		splitpath = path.split("?")
+		splitpath = self.path.split("?")
 		res = get(splitpath[0], URLQuery(''.join(splitpath[1:])))
 		self.send_response(res["status"])
 		for h in res["headers"]:
