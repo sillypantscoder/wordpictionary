@@ -40,7 +40,8 @@ def get(path, query):
 						"status": 303,
 						"headers": {
 							"Location": f"/{g}/check"
-						}
+						},
+						"content": ""
 					}
 		return {
 			"status": 200,
