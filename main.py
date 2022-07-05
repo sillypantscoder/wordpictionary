@@ -72,13 +72,26 @@ def get(path, query):
 		game = activeGames[gameno]
 		res = game.get("/" + gamepath, gameno)
 		return res
-	else:
-		print(f"Bad request to {path}")
-		return {
-			"status": 404,
-			"headers": {},
-			"content": "404"
-		}
+	else: # 									404 page / public files
+			public_files = os.listdir("public_files")
+			if path[1:] in public_files:
+				h = {}
+				if path.split(".")[-1] == "css":
+					h["Content-Type"] = "text/css"
+				return {
+					"status": 200,
+					"headers": h,
+					"content": bin_read_file(f"public_files/{path}")
+				}
+			return {
+				"status": 404,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": f"<html><head><title>Word Pictionary</title></head>\n<body>\n\
+	<h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
+	\n</body></html>"
+			}
 
 def post(path, body):
 	if path.split("/")[1].isdigit():
