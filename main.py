@@ -98,7 +98,8 @@ class URLQuery:
 		self.fields = {}
 		for f in q.split("&"):
 			s = f.split("=")
-			self.fields[s[0]] = s[1]
+			if len(s) >= 2:
+				self.fields[s[0]] = s[1]
 	def get(self, key):
 		if key in self.fields:
 			return self.fields[key]
