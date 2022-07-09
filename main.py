@@ -1,7 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import games
-from sys import stdout
-import pygame
 import threading
 import time
 import os
@@ -14,13 +12,13 @@ activeGames: "list[games.Game]" = [
 	games.Game() for g in range(numberOfGames)
 ]
 
-def read_file(filename):  
+def read_file(filename):
 	f = open(filename, "r")
 	t = f.read()
 	f.close()
 	return t
 
-def bin_read_file(filename):  
+def bin_read_file(filename):
 	f = open(filename, "rb")
 	t = f.read()
 	f.close()
