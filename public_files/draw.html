@@ -60,17 +60,20 @@ select {
 	font: 400 1em sans-serif;
 	cursor: pointer;
 }
+@media (max-width: 930px) {
+	html {
+		font-size: 2.5em;
+	}
+}
 		</style>
 		<link rel="icon" type="image/x-icon" href="draw.ico">
 	</head>
-	<body onscroll="event.preventDefault()">
+	<body>
 		<div class="window">
 			<svg id="theSVG" xmlns="http://www.w3.org/svg" onmousedown="mousedown(event)" onmousemove="mousemove(event)" onmouseup="mouseup(event)">
 				<rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" />
 				<g id="drawingContent"></g>
 			</svg>
-			<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNiAyNiI+PHBhdGggZD0iTSAxOCAyIEggOCBjIC0xLjEgMCAtMS45OSAwLjg1IC0xLjk5IDEuOTUgdiAxOCBDIDYuMDEgMjMuMDUgNi45IDI0IDggMjQgaCAxMCBjIDEuMSAwIDIgLTAuOTUgMiAtMi4wNSB2IC0xOCBDIDIwIDIuODUgMTkuMSAyIDE4IDIgeiBtIDAgMTggSCA4IFYgNiBoIDEwIHYgMTQgeiBtIC00LjIgLTUuNzYgdiAxLjc1IEwgMTcgMTMgbCAtMy4yIC0yLjk4IHYgMS43IGMgLTMuMTEgMC40MyAtNC4zNSAyLjU2IC00LjggNC43IGMgMS4xMSAtMS41IDIuNTggLTIuMTggNC44IC0yLjE4IHogTSAxMyAwIEEgMSAxIDAgMCAxIDEzIDI2IEEgMSAxIDAgMCAxIDEzIDAgWiIgc3Ryb2tlPSJub25lIiBmaWxsPSJibGFjayIgLz48L3N2Zz4=" style="position: absolute; width: 4em; height: auto; margin-left: 500px; margin-top: 400px;" onclick="location.replace('draw_mobile.html')">
-<img style="position: absolute; width: 4em; height: auto; margin-left: 500px; margin-top: 400px;" onclick="location.replace('draw_mobile.html')">
 		</div>
 		<div class="menubar">
 			<div class="wordheader">Draw: <div id="word">???</div></div>
@@ -89,22 +92,30 @@ select {
 			function g(css) { return document.querySelector(css); }
 			var paths = []
 			var currentPath = []
+			function getClickPos(event) {
+				if (event instanceof MouseEvent) {
+					return {x: event.clientX, y: event.clientY}
+				} else {
+					return {x: event.touches[0].clientX, y: event.touches[0].clientY}
+				}
+			}
 			function mousedown(event) {
-				currentPath = ["M " + event.clientX + " " + event.clientY]
+				var {x, y} = getClickPos(event)
+				currentPath = ["M " + x + " " + y]
 			}
 			function mousemove(event) {
-				event.preventDefault()
+				var {x, y} = getClickPos(event)
 				if (g("#mode").value == "Draw") {
 					if (currentPath.length > 0) {
-						currentPath.push("L " + event.clientX + " " + event.clientY)
+						currentPath.push("L " + x + " " + y)
 						updateScreen()
 					}
 				} else {
 					if (currentPath.length == 1) {
-						currentPath.push("L " + event.clientX + " " + event.clientY)
+						currentPath.push("L " + x + " " + y)
 						updateScreen()
 					} else if (currentPath.length == 2) {
-						currentPath[1] = "L " + event.clientX + " " + event.clientY
+						currentPath[1] = "L " + x + " " + y
 						updateScreen()
 					}
 				}
@@ -142,6 +153,28 @@ select {
 					location.replace("draw_mobile.html")
 				}
 			}
+			// Prevent scrolling on mobile
+			var drawrect = g("#theSVG")
+			drawrect.addEventListener("touchstart", function(e){
+				e.preventDefault();//Stops the default behavior
+				mousedown(e);
+				return false
+			}, false);
+			drawrect.addEventListener("touchmove", function(e){
+				e.preventDefault();//Stops the default behavior
+				mousemove(e);
+				return false
+			}, false);
+			drawrect.addEventListener("touchcancel", function(e){
+				e.preventDefault();//Stops the default behavior
+				mouseup(e);
+				return false
+			}, false);
+			drawrect.addEventListener("touchend", function(e){
+				e.preventDefault();//Stops the default behavior
+				mouseup(e);
+				return false
+			}, false);
 		</script>
 	</body>
 </html>

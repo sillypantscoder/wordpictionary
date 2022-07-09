@@ -37,8 +37,8 @@ img {
 
 
 
-@media (max-width: 390px) {
-	body {
-		flex-direction: column;
+@media (max-width: 930px) {
+	html {
+		font-size: 2.5em;
 	}
 }
