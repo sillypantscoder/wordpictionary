@@ -381,13 +381,15 @@ def async_manager():
 		res = ""
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
-			res += f"({i + 1} d/i) Game {i + 1} status: {activeGames[i].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][activeGames[i].status]})\n"
+			res += f"({i + 1} d/i/r) Game {i + 1} status: {activeGames[i].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][activeGames[i].status]})\n"
 			if curchar == str(i + 1) + "d":
 				activeGames[i].status -= 1
 				if activeGames[i].status < 0: activeGames[i].status += 4
 			if curchar == str(i + 1) + "i":
 				activeGames[i].status += 1
 				if activeGames[i].status >= 4: activeGames[i].status -= 4
+			if curchar == str(i + 1) + "r":
+				activeGames.pop(i)
 		# DECREMENT ALL OPTION
 		res += f"\n(D d/i) Change all games' status\n"
 		if curchar == "dd":
@@ -398,6 +400,12 @@ def async_manager():
 			for g in range(len(activeGames)):
 				activeGames[g].status += 1
 				if activeGames[g].status >= 4: activeGames[g].status -= 4
+		# USER LIST
+		res += f"Users:\n"
+		for u in range(len(users)):
+			res += f"  (u{u + 1}) {users[u]}\n"
+			if curchar == "u" + str(u + 1):
+				users.pop(u)
 		# CLOSE WINDOW MESSAGE
 		res += f"Press Ctrl-C then Enter to stop the server\n"
 		# SHOW RESULTS OPTION
