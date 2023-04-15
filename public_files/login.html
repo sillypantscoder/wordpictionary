@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Login</title>
+		<link rel="icon" type="image/x-icon" href="favicon.ico">
+	</head>
+	<body>
+		<h1>Login</h1>
+		<input type="text" id="word">
+		<button onclick="submit()">Submit</button>
+		<script>
+			function g(css) { return document.querySelector(css); }
+			function submit() {
+				location.replace(`/?name=${g("#word").value}`)
+			}
+		</script>
+	</body>
+</html>

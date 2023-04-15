@@ -139,9 +139,10 @@ select {
 				var x = new XMLHttpRequest()
 				x.open("POST", "submit_drawing")
 				x.setRequestHeader("Content-Type", "application/json")
-				x.addEventListener("loadend", (e) => { location.replace("thanks") })
+				x.addEventListener("loadend", (e) => { location.replace("/" + location.search) })
 				x.send(JSON.stringify({
-					p: paths
+					p: paths,
+					user: location.search.split("=")[1]
 				}))
 			}
 			var x = new XMLHttpRequest()

@@ -2,13 +2,13 @@
 <html>
 	<head>
 		<title>Voting</title>
-		<link href="style.css" rel="stylesheet" type="text/css" />
+		<link href="main.css" rel="stylesheet" type="text/css" />
 		<link rel="icon" type="image/x-icon" href="word.ico">
 	</head>
 	<body>
 		<div class="main">
 			<div>
-				<div class="wordheader">What phrase does this picture describe?</div>
+				<div class="wordheader">What word or phrase does this picture describe?</div>
 			</div>
 			<div>
 				<img src="last_photo.svg">
@@ -18,14 +18,19 @@
 			</div>
 		</div>
 		<script>
+			/*X// This code will only be parsed if there are no photos available.
+			document.querySelector("img").parentNode.remove()
+			document.querySelector(".wordheader").innerText = "Enter any word or phrase."
+			// */
 			function g(css) { return document.querySelector(css); }
 			function submit() {
 				var x = new XMLHttpRequest()
 				x.open("POST", "submit_word")
 				x.setRequestHeader("Content-Type", "application/json")
-				x.addEventListener("loadend", (e) => { window.location.replace("thanks") })
+				x.addEventListener("loadend", (e) => { window.location.replace("/" + location.search) })
 				x.send(JSON.stringify({
-					word: g("#word").value
+					word: g("#word").value,
+					user: location.search.split("=")[1]
 				}))
 			}
 		</script>

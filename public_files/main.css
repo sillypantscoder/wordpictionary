@@ -1,0 +1,12 @@
+svg {
+	max-width: 30em;
+	height: auto;
+}
+@media screen and (max-width: 600px) {
+	:root {
+		font-size: 5em;
+	}
+}
+button {
+	font-size: 0.9em;
+}

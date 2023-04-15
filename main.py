@@ -1,16 +1,211 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import games
 import threading
 import time
 import os
+import json
 
 hostName = "0.0.0.0"
-serverPort = 11233
+serverPort = 11112
 
-numberOfGames = 7
-activeGames: "list[games.Game]" = [
-	games.Game() for g in range(numberOfGames)
-]
+class URLQuery:
+	def __init__(self, q):
+		self.orig = q
+		self.fields = {}
+		for f in q.split("&"):
+			s = f.split("=")
+			if len(s) >= 2:
+				self.fields[s[0]] = s[1]
+	def get(self, key):
+		if key in self.fields:
+			return self.fields[key]
+		else:
+			return ''
+
+class GameStatus:
+	WAITING_TO_START = 0
+	WAITING_FOR_FIRST_WORD = 1
+	NEEDS_PICTURE = 2
+	CREATING_PICTURE = 3
+	NEEDS_WORD = 4
+	CREATING_WORD = 5
+
+class Game:
+	def __init__(self):
+		self.history = []
+		self.status = GameStatus.WAITING_TO_START
+	def get(self, path, query, gameno):
+		if path == "/check":
+			# Check for game status openings
+			if self.status == GameStatus.WAITING_FOR_FIRST_WORD:
+				return {
+					"status": 303,
+					"headers": {
+						"Location": f"/{gameno}/word?" + query.orig
+					},
+					"content": ""
+				}
+			if self.status == GameStatus.NEEDS_PICTURE:
+				return {
+					"status": 303,
+					"headers": {
+						"Location": f"/{gameno}/draw?" + query.orig
+					},
+					"content": ""
+				}
+			if self.status == GameStatus.NEEDS_WORD:
+				return {
+					"status": 303,
+					"headers": {
+						"Location": f"/{gameno}/word?" + query.orig
+					},
+					"content": ""
+				}
+			return {
+				"status": 303,
+				"headers": {
+					"Location": f"/"
+				},
+				"content": ""
+			}
+		elif path == "/draw":
+			if self.status == GameStatus.NEEDS_PICTURE:
+				self.status = GameStatus.CREATING_PICTURE
+				return {
+					"status": 200,
+					"headers": {
+						"Content-Type": "text/html"
+					},
+					"content": read_file("public_files/draw.html")
+				}
+			return {
+				"status": 303,
+				"headers": {
+					"Location": f"/{gameno}/check?" + query.orig
+				},
+				"content": ""
+			}
+		elif path == "/word":
+			if self.status == GameStatus.NEEDS_WORD:
+				self.status = GameStatus.CREATING_WORD
+				return {
+					"status": 200,
+					"headers": {
+						"Content-Type": "text/html"
+					},
+					"content": read_file("public_files/word.html")
+				}
+			if self.status == GameStatus.WAITING_FOR_FIRST_WORD:
+				self.status = GameStatus.CREATING_WORD
+				return {
+					"status": 200,
+					"headers": {
+						"Content-Type": "text/html"
+					},
+					"content": read_file("public_files/word.html").replace("/*X", "")
+				}
+			return {
+				"status": 303,
+				"headers": {
+					"Location": f"/{gameno}/check?" + query.orig
+				},
+				"content": ""
+			}
+		elif path == "/last_word":
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/plain"
+				},
+				"content": self.history[-1]["word"]
+			}
+		elif path == "/last_photo.svg":
+			try:
+				r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
+	\t<style>
+	\t\tpath{fill:none;stroke:black;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}</style>
+	\t<g style="transform: translate(10px, 10px);">"""
+				img = self.history[-1]["image"]
+				for i in img:
+					r += f"""\t\t<path d="{i}" />"""
+				r += """\t</g>
+	</svg>"""
+				return {
+					"status": 200,
+					"headers": {
+						"Content-Type": "image/svg+xml"
+					},
+					"content": r
+				}
+			except: return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "image/svg+xml"
+				},
+				"content": ""
+			}
+		return {
+				"status": 303,
+				"headers": {
+					"Location": f"/?" + query.orig
+				},
+				"content": ""
+			}
+	def post(self, path, body, gameno):
+		if path == "/submit_drawing":
+			self.history[-1]["image"] = json.loads(body)["p"]
+			self.history[-1]["imageuser"] = json.loads(body)["user"]
+			self.status = GameStatus.NEEDS_WORD
+			return {
+				"status": 200,
+				"headers": {},
+				"content": ""
+			}
+		elif path == "/submit_word":
+			self.history.append({
+				"word": json.loads(body)["word"],
+				"worduser": json.loads(body)["user"],
+				"image": [],
+				"imageuser": ""
+			})
+			self.status = GameStatus.NEEDS_PICTURE
+			return {
+				"status": 200,
+				"headers": {},
+				"content": ""
+			}
+		else:
+			return {
+				"status": 404,
+				"headers": {},
+				"content": ""
+			}
+	def can_join(self, name):
+		# Name is not in the last two entries
+		if len(self.history) == 0: return True
+		if self.history[-1]["worduser"] == name: return False
+		if self.history[-1]["imageuser"] == name: return False
+		if len(self.history) > 1:
+			if self.history[-2]["worduser"] == name: return False
+			if self.history[-2]["imageuser"] == name: return False
+		return True
+	def resultHTML(self):
+		entries = []
+		for i in self.history:
+			paths = []
+			for j in i["image"]:
+				paths.append(f"<path d=\"{j}\" fill=\"none\" stroke=\"black\" stroke-width=\"1px\" />")
+			entries.append(f"<h1>{i['word']}<span style='font-size: 1rem;'> by {i['worduser']}</span></h1><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
+		return ''.join(entries)
+	def __repr__(self) -> str:
+		entries = []
+		for i in self.history:
+			paths = []
+			for j in i["image"]:
+				paths.append(f"\n  - {j}")
+			entries.append(f"\n- \"{i['word']}\" by {i['worduser']}\n- Drawing by {i['imageuser']}:{''.join(paths)}")
+		return ''.join(entries)
+
+activeGames = [Game()]
 
 def read_file(filename):
 	f = open(filename, "r")
@@ -29,32 +224,60 @@ def write_file(filename, content):
 	f.write(content)
 	f.close()
 
-def get(path, query):
+users = []
+def get(path, query: URLQuery):
 	if path == "/":
-		if not show_results:
-			if allow_game_checking:
-				for g in range(len(activeGames)):
-					if str(g) != query.get("from"):
-						if activeGames[g].drawingProgress in [0, 2]:
-							return {
-								"status": 303,
-								"headers": {
-									"Location": f"/{g}/check"
-								},
-								"content": ""
-							}
-			# No available games...
+		if showing_results:
 			return {
 				"status": 200,
 				"headers": {
 					"Content-Type": "text/html"
 				},
-				"content": ("""<!DOCTYPE html>
+				"content": f"""<!DOCTYPE html>
+<html>
+	<head>
+		<title>Results</title>
+		<link href="main.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<h1>Results</h1>
+		{''.join([f"<h2 style='background:black;color:white;margin:1em;padding:1em;border-radius:1em;'><i>Game #{i + 1}</i></h2>{g.resultHTML()}" for i, g in enumerate(activeGames)])}
+	</body>
+</html>"""
+			}
+		if query.get("name") == '':
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": read_file("public_files/login.html")
+			}
+		if query.get("name") not in users:
+			users.append(query.get("name"))
+			activeGames.append(Game())
+		for g in range(len(activeGames)):
+			if activeGames[g].can_join(query.get("name")):
+				if activeGames[g].status in [GameStatus.WAITING_FOR_FIRST_WORD, GameStatus.NEEDS_PICTURE, GameStatus.NEEDS_WORD]:
+					return {
+						"status": 303,
+						"headers": {
+							"Location": f"/{g}/check?" + query.orig
+						},
+						"content": ""
+					}
+		# No available games...
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/html"
+			},
+			"content": ("""<!DOCTYPE html>
 <html>
 \t<head>
 \t\t<title>Waiting</title>
-\t\t<link href="wait.css" rel="stylesheet" type="text/css" />
 \t\t<script>setTimeout(() => { location.reload() }, Math.random() * 20000)</script>
+\t\t<link href="main.css" rel="stylesheet" type="text/css" />
 \t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 \t</head>
 \t<body>
@@ -62,32 +285,7 @@ def get(path, query):
 \t\t<button onclick="location.reload()">Refresh</button>
 \t</body>
 </html>""")
-			}
-		else:
-			# Display the results
-			return {
-				"status": 200,
-				"headers": {
-					"Content-Type": "text/html"
-				},
-				"content": """<!DOCTYPE html>
-<html>
-\t<head>
-\t\t<title>Word Pictionary - Results</title>
-\t\t<link href="style.css" rel="stylesheet" type="text/css" />
-\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
-\t\t<style>
-body {
-\tdisplay: block;
-}"""+f"""
-\t\t</style>
-\t</head>
-\t<body>
-\t\t<h1>Word Pictionary - Results</h1>
-{''.join([activeGames[x].get_results_html(x) for x in range(len(activeGames))])}
-\t</body>
-</html>"""
-			}
+		}
 	elif path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
 		#if gamepath == "refresh": print(f"[R{path.split('/')[1]}]", end="")
@@ -95,28 +293,28 @@ body {
 		#stdout.flush()
 		gameno = int(path.split("/")[1])
 		game = activeGames[gameno]
-		res = game.get("/" + gamepath, gameno)
+		res = game.get("/" + gamepath, query, gameno)
 		return res
 	else: # 									404 page / public files
-			public_files = os.listdir("public_files")
-			if path[1:] in public_files:
-				h = {}
-				if path.split(".")[-1] == "css":
-					h["Content-Type"] = "text/css"
-				return {
-					"status": 200,
-					"headers": h,
-					"content": bin_read_file(f"public_files/{path}")
-				}
+		public_files = os.listdir("public_files")
+		if path[1:] in public_files:
+			h = {}
+			if path.split(".")[-1] == "css":
+				h["Content-Type"] = "text/css"
 			return {
-				"status": 404,
-				"headers": {
-					"Content-Type": "text/html"
-				},
-				"content": f"<html><head><title>Word Pictionary</title></head>\n<body>\n\
-	<h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
-	\n</body></html>"
+				"status": 200,
+				"headers": h,
+				"content": bin_read_file(f"public_files/{path}")
 			}
+		return {
+			"status": 404,
+			"headers": {
+				"Content-Type": "text/html"
+			},
+			"content": f"<html><head><title>Word Pictionary</title></head>\n<body>\n\
+<h1>Not Found</h1><p><a href='/' style='color: rgb(0, 0, 238);'>Return home</a></p>\
+\n</body></html>"
+		}
 
 def post(path, body):
 	if path.split("/")[1].isdigit():
@@ -134,23 +332,10 @@ def post(path, body):
 			"content": "404"
 		}
 
-class URLQuery:
-	def __init__(self, q):
-		self.fields = {}
-		for f in q.split("&"):
-			s = f.split("=")
-			if len(s) >= 2:
-				self.fields[s[0]] = s[1]
-	def get(self, key):
-		if key in self.fields:
-			return self.fields[key]
-		else:
-			return ''
-
 class MyServer(BaseHTTPRequestHandler):
 	def do_GET(self):
 		splitpath = self.path.split("?")
-		res = get(splitpath[0], URLQuery(''.join(splitpath[1:])))
+		res: "dict" = get(splitpath[0], URLQuery(''.join(splitpath[1:]))) # type: ignore
 		self.send_response(res["status"])
 		for h in res["headers"]:
 			self.send_header(h, res["headers"][h])
@@ -174,10 +359,10 @@ class MyServer(BaseHTTPRequestHandler):
 		print(u"\u001b[0m", end="")
 		# don't output requests
 
-def async_pygame():
+showing_results = False
+def async_manager():
 	global running
-	global show_results
-	global allow_game_checking
+	global showing_results
 	# Get char
 	chars = []
 	def getChar():
@@ -196,26 +381,33 @@ def async_pygame():
 		res = ""
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
-			res += f"Game {i + 1} status: {activeGames[i].drawingProgress} ({['Waiting for word', 'Word', 'Waiting for draw', 'Drawing'][activeGames[i].drawingProgress]})\n"
-			if curchar == str(i + 1):
-				activeGames[i].drawingProgress -= 1
-				if activeGames[i].drawingProgress < 0: activeGames[i].drawingProgress += 4
+			res += f"({i + 1} d/i) Game {i + 1} status: {activeGames[i].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][activeGames[i].status]})\n"
+			if curchar == str(i + 1) + "d":
+				activeGames[i].status -= 1
+				if activeGames[i].status < 0: activeGames[i].status += 4
+			if curchar == str(i + 1) + "i":
+				activeGames[i].status += 1
+				if activeGames[i].status >= 4: activeGames[i].status -= 4
 		# DECREMENT ALL OPTION
-		res += f"\n(D) Decrement all games' status\n"
-		if curchar == "d":
+		res += f"\n(D d/i) Change all games' status\n"
+		if curchar == "dd":
 			for g in range(len(activeGames)):
-				activeGames[g].drawingProgress -= 1
-				if activeGames[g].drawingProgress < 0: activeGames[g].drawingProgress += 4
+				activeGames[g].status -= 1
+				if activeGames[g].status < 0: activeGames[g].status += 4
+		if curchar == "di":
+			for g in range(len(activeGames)):
+				activeGames[g].status += 1
+				if activeGames[g].status >= 4: activeGames[g].status -= 4
 		# CLOSE WINDOW MESSAGE
 		res += f"Press Ctrl-C then Enter to stop the server\n"
 		# SHOW RESULTS OPTION
-		res += f"(S) Show results: {'Yes' if show_results else 'No'}\n"
+		res += f"(S) Show results: {'Yes' if showing_results else 'No'}\n"
 		if curchar == "s":
-			show_results = not show_results
-		# GAME CHECKING OPTION
+			showing_results = not showing_results
+		"""# GAME CHECKING OPTION
 		res += f"(G) Game checking: {'Yes' if allow_game_checking else 'No'}"
 		if curchar == "g":
-			allow_game_checking = not allow_game_checking
+			allow_game_checking = not allow_game_checking"""
 		# Flip
 		maxwidth = max([len(l) for l in res.split("\n")])
 		e = f"\n=={'=' * maxwidth}=="
@@ -224,12 +416,11 @@ def async_pygame():
 
 if __name__ == "__main__":
 	running = True
-	show_results = False
-	allow_game_checking = True
+	showing_results = False
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
-	threading.Thread(target=async_pygame).start()
+	threading.Thread(target=async_manager).start()
 	while running:
 		try:
 			webServer.handle_request()
@@ -237,10 +428,10 @@ if __name__ == "__main__":
 			running = False
 	webServer.server_close()
 	print("Server stopped")
-	print("JBDF results:\n\nAP")
+	print("Results:")
 	for g in range(len(activeGames)):
-		res = activeGames[g].get_jbdf_content(g)
-		print(res[1:])
+		res = repr(activeGames[g])
+		print(f"\nGame {g}:{res}")
 	print("\nPress Enter to exit...")
 
 
