@@ -408,6 +408,10 @@ def async_manager():
 				users.pop(u)
 		# CLOSE WINDOW MESSAGE
 		res += f"Press Ctrl-C then Enter to stop the server\n"
+		# CLOSE WINDOW MESSAGE
+		res += f"(N) New game\n"
+		if curchar == "n":
+			activeGames.append(Game())
 		# SHOW RESULTS OPTION
 		res += f"(S) Show results: {'Yes' if showing_results else 'No'}\n"
 		if curchar == "s":
@@ -441,5 +445,3 @@ if __name__ == "__main__":
 		res = repr(activeGames[g])
 		print(f"\nGame {g}:{res}")
 	print("\nPress Enter to exit...")
-
-
