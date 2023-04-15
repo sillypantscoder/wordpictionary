@@ -184,7 +184,7 @@ class Game:
 		if len(self.history) == 0: return True
 		if self.history[-1]["worduser"] == name: return False
 		if self.history[-1]["imageuser"] == name: return False
-		if len(self.history) > 1:
+		if len(self.history) > 1 and len(users) > 2:
 			if self.history[-2]["worduser"] == name: return False
 			if self.history[-2]["imageuser"] == name: return False
 		return True
