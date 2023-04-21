@@ -13,7 +13,7 @@ body {
 	flex-direction: column;
 }
 div.window {
-	flex-grow: 3;
+	height: 500px;
 	display: flex;
 }
 #theSVG {
@@ -85,7 +85,6 @@ select {
 					<option selected>Draw</option>
 				</select>
 			</span>
-			<button onclick="location.replace('draw_mobile.html')" id="mobilebutton">Switch to mobile version</button>
 			<br>Click and drag to draw. Select line mode to draw lines.
 		</div>
 		<script>
@@ -141,19 +140,19 @@ select {
 				x.setRequestHeader("Content-Type", "application/json")
 				x.addEventListener("loadend", (e) => { location.replace("/" + location.search) })
 				x.send(JSON.stringify({
-					p: paths,
-					user: location.search.split("=")[1]
+					p: paths/*,
+					user: decodeURIComponent(location.search.split("=")[1])*/
 				}))
 			}
 			var x = new XMLHttpRequest()
 			x.open("GET", "last_word")
 			x.addEventListener("loadend", (e) => { g("#word").textContent = e.target.responseText })
 			x.send()
-			if(window.matchMedia("(pointer: none)").matches) {
+			/* if (window.matchMedia("(pointer: none)").matches) {
 				if (confirm("You're on a mobile device. Switch to mobile drawing version?")) {
 					location.replace("draw_mobile.html")
 				}
-			}
+			} */
 			// Prevent scrolling on mobile
 			var drawrect = g("#theSVG")
 			drawrect.addEventListener("touchstart", function(e){

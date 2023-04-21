@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Results</title>
+		<link href="main.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<h1>Result Viewer</h1>
+		<p><input type="file"><button onclick="this.previousElementSibling.files[0].text().then(addText)">Upload</button></p>
+		<div id="r"></div>
+		<script>window.addEventListener("error", (e) => alert(`${e.message}`))</script>
+		<script>
+function addText(t) {
+	var r = ""
+	var games = JSON.parse(t)
+	for (var gameno = 0; gameno < games.length; gameno++) {
+		var entries = games[gameno]
+		r += `<h2 style='background:black;color:white;margin:1em;padding:1em;border-radius:1em;'><i>Game #${gameno + 1}</i></h2>`
+		for (var entryno = 0; entryno < entries.length; entryno++) {
+			var entry = entries[entryno]
+			// entry is of type: { word: ..., worduser: ..., image: [...], imageuser: ... }
+			var paths = []
+			for (var pathno = 0; pathno < entry.image.length; pathno++) {
+				paths.push(`<path d="${entry.image[pathno]}" fill="none" stroke="black" stroke-width="1px" />`)
+			}
+			r += `<div>Word by ${entry.worduser}</div><h1 style='font-size: 1em; border-left: 2px solid black; margin: 1em; padding: 1em;'>${entry.word}</h1><div>Drawing by ${entry.imageuser}:</div><svg viewBox='0 0 520 520'>${paths.join('')}</svg>`
+		}
+	}
+	document.querySelector("#r").innerHTML = r
+}
+		</script>
+	</body>
+</html>

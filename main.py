@@ -3,6 +3,7 @@ import threading
 import time
 import os
 import json
+from urllib.parse import unquote
 
 hostName = "0.0.0.0"
 serverPort = 11112
@@ -33,6 +34,7 @@ class Game:
 	def __init__(self):
 		self.history = []
 		self.status = GameStatus.WAITING_TO_START
+		self.activePlayer = None
 	def get(self, path, query, gameno):
 		if path == "/check":
 			# Check for game status openings
@@ -63,12 +65,14 @@ class Game:
 			return {
 				"status": 303,
 				"headers": {
-					"Location": f"/"
+					"Location": f"/?" + query.orig
 				},
 				"content": ""
 			}
 		elif path == "/draw":
 			if self.status == GameStatus.NEEDS_PICTURE:
+				if self.activePlayer == None:
+					self.activePlayer = unquote(query.orig.split("=")[-1])
 				self.status = GameStatus.CREATING_PICTURE
 				return {
 					"status": 200,
@@ -77,6 +81,15 @@ class Game:
 					},
 					"content": read_file("public_files/draw.html")
 				}
+			elif self.status == GameStatus.CREATING_PICTURE:
+				if self.activePlayer == unquote(query.orig.split("=")[-1]):
+					return {
+						"status": 200,
+						"headers": {
+							"Content-Type": "text/html"
+						},
+						"content": read_file("public_files/draw.html")
+					}
 			return {
 				"status": 303,
 				"headers": {
@@ -86,6 +99,8 @@ class Game:
 			}
 		elif path == "/word":
 			if self.status == GameStatus.NEEDS_WORD:
+				if self.activePlayer == None:
+					self.activePlayer = unquote(query.orig.split("=")[-1])
 				self.status = GameStatus.CREATING_WORD
 				return {
 					"status": 200,
@@ -94,7 +109,9 @@ class Game:
 					},
 					"content": read_file("public_files/word.html")
 				}
-			if self.status == GameStatus.WAITING_FOR_FIRST_WORD:
+			elif self.status == GameStatus.WAITING_FOR_FIRST_WORD:
+				if self.activePlayer == None:
+					self.activePlayer = unquote(query.orig.split("=")[-1])
 				self.status = GameStatus.CREATING_WORD
 				return {
 					"status": 200,
@@ -103,6 +120,23 @@ class Game:
 					},
 					"content": read_file("public_files/word.html").replace("/*X", "")
 				}
+			elif self.status == GameStatus.CREATING_WORD:
+				if self.activePlayer == unquote(query.orig.split("=")[-1]):
+					if len(self.history) == 0:
+						return {
+							"status": 200,
+							"headers": {
+								"Content-Type": "text/html"
+							},
+							"content": read_file("public_files/word.html").replace("/*X", "")
+						}
+					return {
+						"status": 200,
+						"headers": {
+							"Content-Type": "text/html"
+						},
+						"content": read_file("public_files/word.html")
+					}
 			return {
 				"status": 303,
 				"headers": {
@@ -121,14 +155,15 @@ class Game:
 		elif path == "/last_photo.svg":
 			try:
 				r = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 520">
-	\t<style>
-	\t\tpath{fill:none;stroke:black;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}</style>
-	\t<g style="transform: translate(10px, 10px);">"""
+\t<style>
+\t\tpath{fill:none;stroke:black;stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}</style>
+\t<g style="transform: translate(10px, 10px);">"""
 				img = self.history[-1]["image"]
 				for i in img:
 					r += f"""\t\t<path d="{i}" />"""
+	 			# """
 				r += """\t</g>
-	</svg>"""
+</svg>"""
 				return {
 					"status": 200,
 					"headers": {
@@ -153,7 +188,8 @@ class Game:
 	def post(self, path, body, gameno):
 		if path == "/submit_drawing":
 			self.history[-1]["image"] = json.loads(body)["p"]
-			self.history[-1]["imageuser"] = json.loads(body)["user"]
+			self.history[-1]["imageuser"] = self.activePlayer
+			self.activePlayer = None
 			self.status = GameStatus.NEEDS_WORD
 			return {
 				"status": 200,
@@ -163,10 +199,11 @@ class Game:
 		elif path == "/submit_word":
 			self.history.append({
 				"word": json.loads(body)["word"],
-				"worduser": json.loads(body)["user"],
+				"worduser": self.activePlayer,
 				"image": [],
 				"imageuser": ""
 			})
+			self.activePlayer = None
 			self.status = GameStatus.NEEDS_PICTURE
 			return {
 				"status": 200,
@@ -182,11 +219,13 @@ class Game:
 	def can_join(self, name):
 		# Name is not in the last two entries
 		if len(self.history) == 0: return True
-		if self.history[-1]["worduser"] == name: return False
-		if self.history[-1]["imageuser"] == name: return False
-		if len(self.history) > 1 and len(users) > 2:
-			if self.history[-2]["worduser"] == name: return False
-			if self.history[-2]["imageuser"] == name: return False
+		if self.history[-1]["imageuser"] == "":
+			if self.history[-1]["worduser"] == name: return False
+			if len(self.history) > 1 and len(users) > 2:
+				if self.history[-2]["imageuser"] == name: return False
+		else:
+			if self.history[-1]["imageuser"] == name: return False
+			if self.history[-1]["worduser"] == name: return False
 		return True
 	def resultHTML(self):
 		entries = []
@@ -194,7 +233,7 @@ class Game:
 			paths = []
 			for j in i["image"]:
 				paths.append(f"<path d=\"{j}\" fill=\"none\" stroke=\"black\" stroke-width=\"1px\" />")
-			entries.append(f"<h1>{i['word']}<span style='font-size: 1rem;'> by {i['worduser']}</span></h1><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
+			entries.append(f"<div>Word by {i['worduser']}</div><h1 style='font-size: 1em; border-left: 2px solid black; margin: 1em; padding: 1em;'>{i['word']}</h1><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
 		return ''.join(entries)
 	def __repr__(self) -> str:
 		entries = []
@@ -256,9 +295,10 @@ def get(path, query: URLQuery):
 		if query.get("name") not in users:
 			users.append(query.get("name"))
 			activeGames.append(Game())
+		hasAnyActiveGames = False
 		for g in range(len(activeGames)):
-			if activeGames[g].can_join(query.get("name")):
-				if activeGames[g].status in [GameStatus.WAITING_FOR_FIRST_WORD, GameStatus.NEEDS_PICTURE, GameStatus.NEEDS_WORD]:
+			if activeGames[g].status in [GameStatus.WAITING_FOR_FIRST_WORD, GameStatus.NEEDS_PICTURE, GameStatus.NEEDS_WORD]:
+				if activeGames[g].can_join(query.get("name")):
 					return {
 						"status": 303,
 						"headers": {
@@ -266,6 +306,29 @@ def get(path, query: URLQuery):
 						},
 						"content": ""
 					}
+			if activeGames[g].status not in [GameStatus.WAITING_TO_START]:
+				hasAnyActiveGames = True
+		if not hasAnyActiveGames:
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": (f"""<!DOCTYPE html>
+<html>
+\t<head>
+\t\t<title>Waiting</title>
+\t\t<script>setTimeout(() => location.reload(), Math.random() * 5000)</script>
+\t\t<link href="main.css" rel="stylesheet" type="text/css" />
+\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
+\t</head>
+\t<body>
+\t\tWaiting for the game to start...<br><br>
+\t\t<button onclick="location.reload()">Refresh</button>
+\t\t<br><p>Player list:</p><ul>{''.join(['<li>'+x+'</li>' for x in users])}</ul>
+\t</body>
+</html>""")
+			}
 		# No available games...
 		return {
 			"status": 200,
@@ -276,7 +339,7 @@ def get(path, query: URLQuery):
 <html>
 \t<head>
 \t\t<title>Waiting</title>
-\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 20000)</script>
+\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 5000)</script>
 \t\t<link href="main.css" rel="stylesheet" type="text/css" />
 \t\t<link rel="icon" type="image/x-icon" href="wait.ico">
 \t</head>
@@ -373,6 +436,8 @@ def async_manager():
 	def async_get_chars():
 		while running:
 			chars.append(input())
+			if "x" in [x.lower() for x in chars]:
+				return;
 	threading.Thread(target=async_get_chars, name="pygame_get_chars_thread", args=[]).start()
 	# Main loop
 	running = True
@@ -381,7 +446,7 @@ def async_manager():
 		res = ""
 		# LIST OF GAMES
 		for i in range(len(activeGames)):
-			res += f"({i + 1} d/i/r) Game {i + 1} status: {activeGames[i].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][activeGames[i].status]})\n"
+			res += f"({i + 1} d/i/r) Game {i + 1} status: {activeGames[i].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][activeGames[i].status]}) player: {activeGames[i].activePlayer}\n"
 			if curchar == str(i + 1) + "d":
 				activeGames[i].status -= 1
 				if activeGames[i].status < 0: activeGames[i].status += 4
@@ -407,7 +472,9 @@ def async_manager():
 			if curchar == "u" + str(u + 1):
 				users.pop(u)
 		# CLOSE WINDOW MESSAGE
-		res += f"Press Ctrl-C then Enter to stop the server\n"
+		res += f"(X) Stop the server\n"
+		if curchar == "x":
+			running = False
 		# CLOSE WINDOW MESSAGE
 		res += f"(N) New game\n"
 		if curchar == "n":
@@ -441,7 +508,14 @@ if __name__ == "__main__":
 	webServer.server_close()
 	print("Server stopped")
 	print("Results:")
+	jsonr = []
 	for g in range(len(activeGames)):
 		res = repr(activeGames[g])
 		print(f"\nGame {g}:{res}")
-	print("\nPress Enter to exit...")
+		jsonr.append(activeGames[g].history)
+	n = 1
+	while os.path.isfile(f"logs/game_{n}.json"): n += 1
+	os.system("mkdir -p logs")
+	f = open(f"logs/game_{n}.json", "w")
+	f.write(json.dumps(jsonr))
+	f.close()

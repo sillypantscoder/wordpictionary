@@ -2,6 +2,10 @@ svg {
 	max-width: 30em;
 	height: auto;
 }
+img {
+	max-height: 50vh;
+	width: auto;
+}
 @media screen and (max-width: 600px) {
 	:root {
 		font-size: 5em;

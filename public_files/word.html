@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>Voting</title>
-		<link href="main.css" rel="stylesheet" type="text/css" />
+		<link href="/main.css" rel="stylesheet" type="text/css" />
 		<link rel="icon" type="image/x-icon" href="word.ico">
 	</head>
 	<body>
@@ -29,10 +29,13 @@
 				x.setRequestHeader("Content-Type", "application/json")
 				x.addEventListener("loadend", (e) => { window.location.replace("/" + location.search) })
 				x.send(JSON.stringify({
-					word: g("#word").value,
-					user: location.search.split("=")[1]
+					word: g("#word").value/*,
+					user: decodeURIComponent(location.search.split("=")[1])*/
 				}))
 			}
+			g("#word").addEventListener("keydown", (e) => {
+				if (e.key == "Enter") submit()
+			})
 		</script>
 	</body>
 </html>
