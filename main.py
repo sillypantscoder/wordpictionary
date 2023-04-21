@@ -467,10 +467,10 @@ def async_manager():
 				if activeGames[g].status >= 4: activeGames[g].status -= 4
 		# USER LIST
 		res += f"Users:\n"
-		for u in range(len(users)):
-			res += f"  (u{u + 1}) {users[u]}\n"
-			if curchar == "u" + str(u + 1):
-				users.pop(u)
+		for u in [[x, users[x]] for x in range(len(users))]:
+			res += f"  (u{u[0] + 1}) {u[1]}\n"
+			if curchar == "u" + str(u[0] + 1):
+				users.remove(u[1])
 		# CLOSE WINDOW MESSAGE
 		res += f"(X) Stop the server\n"
 		if curchar == "x":
