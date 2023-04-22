@@ -71,8 +71,7 @@ class Game:
 			}
 		elif path == "/draw":
 			if self.status == GameStatus.NEEDS_PICTURE:
-				if self.activePlayer == None:
-					self.activePlayer = unquote(query.orig.split("=")[-1])
+				self.activePlayer = unquote(query.orig.split("=")[-1])
 				self.status = GameStatus.CREATING_PICTURE
 				return {
 					"status": 200,
@@ -99,8 +98,7 @@ class Game:
 			}
 		elif path == "/word":
 			if self.status == GameStatus.NEEDS_WORD:
-				if self.activePlayer == None:
-					self.activePlayer = unquote(query.orig.split("=")[-1])
+				self.activePlayer = unquote(query.orig.split("=")[-1])
 				self.status = GameStatus.CREATING_WORD
 				return {
 					"status": 200,
@@ -110,8 +108,7 @@ class Game:
 					"content": read_file("public_files/word.html")
 				}
 			elif self.status == GameStatus.WAITING_FOR_FIRST_WORD:
-				if self.activePlayer == None:
-					self.activePlayer = unquote(query.orig.split("=")[-1])
+				self.activePlayer = unquote(query.orig.split("=")[-1])
 				self.status = GameStatus.CREATING_WORD
 				return {
 					"status": 200,
@@ -298,7 +295,7 @@ def get(path, query: URLQuery):
 		hasAnyActiveGames = False
 		for g in range(len(activeGames)):
 			if activeGames[g].status in [GameStatus.WAITING_FOR_FIRST_WORD, GameStatus.NEEDS_PICTURE, GameStatus.NEEDS_WORD]:
-				if activeGames[g].can_join(query.get("name")):
+				if activeGames[g].can_join(unquote(query.get("name"))):
 					return {
 						"status": 303,
 						"headers": {
@@ -445,16 +442,16 @@ def async_manager():
 		curchar = getChar().lower()
 		res = ""
 		# LIST OF GAMES
-		for i in range(len(activeGames)):
-			res += f"({i + 1} d/i/r) Game {i + 1} status: {activeGames[i].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][activeGames[i].status]}) player: {activeGames[i].activePlayer}\n"
-			if curchar == str(i + 1) + "d":
-				activeGames[i].status -= 1
-				if activeGames[i].status < 0: activeGames[i].status += 4
-			if curchar == str(i + 1) + "i":
-				activeGames[i].status += 1
-				if activeGames[i].status >= 4: activeGames[i].status -= 4
-			if curchar == str(i + 1) + "r":
-				activeGames.pop(i)
+		for i in [[x, activeGames[x]] for x in range(len(activeGames))]:
+			res += f"({i[0] + 1} d/i/r) Game {i[0] + 1} status: {i[1].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][i[1].status]}) player: {i[1].activePlayer}\n"
+			if curchar == str(i[0] + 1) + "d":
+				i[1].status -= 1
+				if i[1].status < 0: i[1].status += 4
+			if curchar == str(i[0] + 1) + "i":
+				i[1].status += 1
+				if i[1].status >= 4: i[1].status -= 4
+			if curchar == str(i[0] + 1) + "r":
+				activeGames.remove(i[1])
 		# DECREMENT ALL OPTION
 		res += f"\n(D d/i) Change all games' status\n"
 		if curchar == "dd":
