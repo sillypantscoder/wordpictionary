@@ -8,7 +8,7 @@
 	<body>
 		<div class="main">
 			<div>
-				<div class="wordheader">What word or phrase does this picture describe?</div>
+				<div class="wordheader">What phrase or sentence does this picture describe?</div>
 			</div>
 			<div>
 				<img src="last_photo.svg">
@@ -33,9 +33,6 @@
 					user: decodeURIComponent(location.search.split("=")[1])*/
 				}))
 			}
-			g("#word").addEventListener("keydown", (e) => {
-				if (e.key == "Enter") submit()
-			})
 		</script>
 	</body>
 </html>

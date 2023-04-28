@@ -78,7 +78,7 @@ class Game:
 					"headers": {
 						"Content-Type": "text/html"
 					},
-					"content": read_file("public_files/draw.html")
+					"content": read_file("public_files/draw2.html")
 				}
 			elif self.status == GameStatus.CREATING_PICTURE:
 				if self.activePlayer == unquote(query.orig.split("=")[-1]):
@@ -87,7 +87,7 @@ class Game:
 						"headers": {
 							"Content-Type": "text/html"
 						},
-						"content": read_file("public_files/draw.html")
+						"content": read_file("public_files/draw2.html")
 					}
 			return {
 				"status": 303,
@@ -230,7 +230,7 @@ class Game:
 			paths = []
 			for j in i["image"]:
 				paths.append(f"<path d=\"{j}\" fill=\"none\" stroke=\"black\" stroke-width=\"1px\" />")
-			entries.append(f"<div>Word by {i['worduser']}</div><h1 style='font-size: 1em; border-left: 2px solid black; margin: 1em; padding: 1em;'>{i['word']}</h1><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
+			entries.append(f"<div>Phrase by {i['worduser']}</div><h1 style='font-size: 1em; border-left: 2px solid black; margin: 1em; padding: 1em;'>{i['word']}</h1><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
 		return ''.join(entries)
 	def __repr__(self) -> str:
 		entries = []
@@ -322,7 +322,7 @@ def get(path, query: URLQuery):
 \t<body>
 \t\tWaiting for the game to start...<br><br>
 \t\t<button onclick="location.reload()">Refresh</button>
-\t\t<br><p>Player list:</p><ul>{''.join(['<li>'+x+'</li>' for x in users])}</ul>
+\t\t<br><p>Player list:</p><ul>{''.join(['<li>'+unquote(x)+'</li>' for x in users])}</ul>
 \t</body>
 </html>""")
 			}
@@ -465,7 +465,7 @@ def async_manager():
 		# USER LIST
 		res += f"Users:\n"
 		for u in [[x, users[x]] for x in range(len(users))]:
-			res += f"  (u{u[0] + 1}) {u[1]}\n"
+			res += f"  (u{u[0] + 1}) {unquote(u[1])}\n"
 			if curchar == "u" + str(u[0] + 1):
 				users.remove(u[1])
 		# CLOSE WINDOW MESSAGE
@@ -480,10 +480,6 @@ def async_manager():
 		res += f"(S) Show results: {'Yes' if showing_results else 'No'}\n"
 		if curchar == "s":
 			showing_results = not showing_results
-		"""# GAME CHECKING OPTION
-		res += f"(G) Game checking: {'Yes' if allow_game_checking else 'No'}"
-		if curchar == "g":
-			allow_game_checking = not allow_game_checking"""
 		# Flip
 		maxwidth = max([len(l) for l in res.split("\n")])
 		e = f"\n=={'=' * maxwidth}=="

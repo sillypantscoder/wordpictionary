@@ -11,13 +11,16 @@ body {
 	margin: 0;
 	height: 100%;
 	flex-direction: column;
+	background: linear-gradient(-45deg, #333 0%, #333, 25%, #777 50%, #333 75%, #333 100%);
 }
-#theSVG {
-	width: 500px;
+canvas {
+	background: white;
+	max-height: calc(100vh - 6em);
+	max-width: calc(100vh - 6em);
 }
 div.menubar {
 	flex-grow: 1;
-	background: linear-gradient(180deg, #999 0%, transparent 10em);
+	background: linear-gradient(180deg, #999 0%, white 10em);
 	padding: 1em;
 }
 .menubar > * {
@@ -64,10 +67,7 @@ select {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	</head>
 	<body>
-		<svg id="theSVG" xmlns="http://www.w3.org/svg" onmousedown="mousedown(event)" onmousemove="mousemove(event)" onmouseup="mouseup(event)">
-			<rect width="500" height="500" fill="white" stroke="gray" stroke-width="5" />
-			<g id="drawingContent"></g>
-		</svg>
+		<canvas width="500" height="500" onmousedown="mousedown(event)" onmousemove="mousemove(event)" onmouseup="mouseup(event)"></canvas>
 		<div class="menubar">
 			<div class="wordheader">Draw: <div id="word">???</div></div>
 			<button id="undobtn" onclick="undo()">Undo</button>
@@ -103,12 +103,18 @@ select {
 					return {x: event.touches[0].clientX, y: event.touches[0].clientY}
 				}
 			}
+			function scaleCoords(o) {
+				var rect = document.querySelector("canvas").getBoundingClientRect()
+				var x = (o.x - rect.left) * (500 / rect.width)
+				var y = (o.y - rect.top) * (500 / rect.height)
+				return { x, y }
+			}
 			function mousedown(event) {
-				var {x, y} = getClickPos(event)
+				var {x, y} = scaleCoords(getClickPos(event))
 				currentPath = ["M " + x + " " + y]
 			}
 			function mousemove(event) {
-				var {x, y} = getClickPos(event)
+				var {x, y} = scaleCoords(getClickPos(event))
 				if (g("#mode").value == "Draw") {
 					if (currentPath.length > 0) {
 						currentPath.push("L " + x + " " + y)
@@ -133,7 +139,26 @@ select {
 				}
 			}
 			function updateScreen() {
-				g("#drawingContent").innerHTML = "<path d='" + paths.join(" ") + "' /><path d='" + currentPath.join(" ") + "' style='stroke: red;' />"
+				var c = g("canvas").getContext('2d')
+				c.clearRect(0, 0, 500, 500)
+				c.strokeStyle = "black"
+				for (var i = 0; i < paths.length; i++) {
+					var path = paths[i].split(" ")
+					c.beginPath()
+					c.moveTo(Number(path[1]), Number(path[2]))
+					for (var a = 1; a < path.length; a += 3) {
+						c.lineTo(Number(path[a]), Number(path[a + 1]))
+					}
+					c.stroke()
+				}
+				c.strokeStyle = "red"
+				var path = currentPath.join(" ").split(" ")
+					c.beginPath()
+					c.moveTo(Number(path[1]), Number(path[2]))
+					for (var a = 1; a < path.length; a += 3) {
+						c.lineTo(Number(path[a]), Number(path[a + 1]))
+					}
+					c.stroke()
 				save()
 			}
 			function undo() {
@@ -163,7 +188,7 @@ select {
 				}
 			} */
 			// Prevent scrolling on mobile
-			var drawrect = g("#theSVG")
+			var drawrect = g("canvas")
 			drawrect.addEventListener("touchstart", function(e){
 				e.preventDefault();//Stops the default behavior
 				mousedown(e);
