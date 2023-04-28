@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Waiting</title>
+		<script>setTimeout(() => location.reload(), Math.random() * 5000)</script>
+		<link href="main.css" rel="stylesheet" type="text/css" />
+		<link rel="icon" type="image/x-icon" href="wait.ico">
+	</head>
+	<body>
+		Waiting for the game to start...<br><br>
+		<button onclick="location.reload()">Refresh</button>
+		<p>Player list:</p>
+		<ul>{{PLAYERLIST}}</ul>
+	</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Waiting</title>
+		<script>setTimeout(() => { location.reload() }, Math.random() * 5000)</script>
+		<link href="main.css" rel="stylesheet" type="text/css" />
+		<link href="wait.css" rel="stylesheet" type="text/css" />
+		<link rel="icon" type="image/x-icon" href="wait.ico">
+	</head>
+	<body>
+		<p>Wait for other players to finish drawing and writing!</p>
+		<button onclick="location.reload()">Refresh</button>
+		<p style="margin: 1em; padding: 1em; border: 1px solid black; border-radius: 1em;">{{GAMEINFO}}</p>
+	</body>
+</html>

@@ -4,6 +4,7 @@ import time
 import os
 import json
 from urllib.parse import unquote
+import random
 
 hostName = "0.0.0.0"
 serverPort = 11112
@@ -260,6 +261,41 @@ def write_file(filename, content):
 	f.write(content)
 	f.close()
 
+def getGameInfo():
+	msg_word = [
+		"%s is writing a sentence",
+		"%s is deciphering a picture",
+		"%s got a really terrible picture to try to figure out",
+		"%s is extremely confused on what this picture is supposed to be",
+		"%s is scratching their head"
+	]
+	msg_draw = [
+		"%s is drawing",
+		"%s is creating a masterpiece",
+		"%s is working really hard on a picture that will then go unappreciated",
+		"%s is trying to figure out how to draw this",
+		"%s is stuck on the drawing"
+	]
+	info = []
+	for game in activeGames:
+		if game.status == GameStatus.CREATING_WORD:
+			info.append(random.choice(msg_word).replace("%s", game.activePlayer))
+		if game.status == GameStatus.CREATING_PICTURE:
+			info.append(random.choice(msg_draw).replace("%s", game.activePlayer))
+	if len(info) == 0:
+		return random.choice([
+			"Uh oh, nobody is doing anything right now...",
+			"Oops, everyone else is also just sitting around...",
+			"Nothing interesting is happening right now...",
+			"Uh oh, nothing is actually happening right now...",
+			"It looks like nothing's going on right now...",
+			"Everyone else is also bored...",
+			"Something went wrong...",
+			"I feel like something is not happening..."
+		])
+	else:
+		return random.choice(info)
+
 users = []
 def get(path, query: URLQuery):
 	if path == "/":
@@ -311,20 +347,7 @@ def get(path, query: URLQuery):
 				"headers": {
 					"Content-Type": "text/html"
 				},
-				"content": (f"""<!DOCTYPE html>
-<html>
-\t<head>
-\t\t<title>Waiting</title>
-\t\t<script>setTimeout(() => location.reload(), Math.random() * 5000)</script>
-\t\t<link href="main.css" rel="stylesheet" type="text/css" />
-\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
-\t</head>
-\t<body>
-\t\tWaiting for the game to start...<br><br>
-\t\t<button onclick="location.reload()">Refresh</button>
-\t\t<br><p>Player list:</p><ul>{''.join(['<li>'+unquote(x)+'</li>' for x in users])}</ul>
-\t</body>
-</html>""")
+				"content": read_file("public_files/gamestart.html").replace("{{PLAYERLIST}}", ''.join(['<li>'+unquote(x)+'</li>' for x in users]))
 			}
 		# No available games...
 		return {
@@ -332,19 +355,7 @@ def get(path, query: URLQuery):
 			"headers": {
 				"Content-Type": "text/html"
 			},
-			"content": ("""<!DOCTYPE html>
-<html>
-\t<head>
-\t\t<title>Waiting</title>
-\t\t<script>setTimeout(() => { location.reload() }, Math.random() * 5000)</script>
-\t\t<link href="main.css" rel="stylesheet" type="text/css" />
-\t\t<link rel="icon" type="image/x-icon" href="wait.ico">
-\t</head>
-\t<body>
-\t\tWaiting for other players...<br><br>
-\t\t<button onclick="location.reload()">Refresh</button>
-\t</body>
-</html>""")
+			"content": read_file("public_files/wait.html").replace("{{GAMEINFO}}", getGameInfo())
 		}
 	elif path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
