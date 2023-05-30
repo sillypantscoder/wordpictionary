@@ -107,7 +107,7 @@ select {
 				var rect = document.querySelector("canvas").getBoundingClientRect()
 				var x = (o.x - rect.left) * (500 / rect.width)
 				var y = (o.y - rect.top) * (500 / rect.height)
-				return { x, y }
+				return { x: Math.round(x), y: Math.round(y) }
 			}
 			function mousedown(event) {
 				var {x, y} = scaleCoords(getClickPos(event))

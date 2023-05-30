@@ -230,8 +230,8 @@ class Game:
 		for i in self.history:
 			paths = []
 			for j in i["image"]:
-				paths.append(f"<path d=\"{j}\" fill=\"none\" stroke=\"black\" stroke-width=\"1px\" />")
-			entries.append(f"<div>Phrase by {i['worduser']}</div><h1 style='font-size: 1em; border-left: 2px solid black; margin: 1em; padding: 1em;'>{i['word']}</h1><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
+				paths.append(f'<path d="{j}" fill="none" stroke="black" stroke-width="1px" />')
+			entries.append(f"<div>Phrase by {i['worduser']}</div><h3>{i['word']}</h3><div>Drawing by {i['imageuser']}:</div><svg viewBox='0 0 520 520'>{''.join(paths)}</svg>")
 		return ''.join(entries)
 	def __repr__(self) -> str:
 		entries = []
@@ -239,7 +239,7 @@ class Game:
 			paths = []
 			for j in i["image"]:
 				paths.append(f"\n  - {j}")
-			entries.append(f"\n- \"{i['word']}\" by {i['worduser']}\n- Drawing by {i['imageuser']}:{''.join(paths)}")
+			entries.append(f"""\n- \"{i['word']}\" by {i['worduser']}\n- Drawing by {i['imageuser']}:{''.join(paths)}""")
 		return ''.join(entries)
 
 activeGames = [Game()]
@@ -265,16 +265,15 @@ def getGameInfo():
 	msg_word = [
 		"%s is writing a sentence",
 		"%s is deciphering a picture",
-		"%s got a really terrible picture to try to figure out",
 		"%s is extremely confused on what this picture is supposed to be",
-		"%s is scratching their head"
+		"%s is scratching their head",
+		"%s is trying to decipher a terrible picture"
 	]
 	msg_draw = [
 		"%s is drawing",
 		"%s is creating a masterpiece",
 		"%s is working really hard on a picture that will then go unappreciated",
-		"%s is trying to figure out how to draw this",
-		"%s is stuck on the drawing"
+		"%s is trying to figure out how to draw a strange thing"
 	]
 	info = []
 	for game in activeGames:
@@ -283,16 +282,15 @@ def getGameInfo():
 		if game.status == GameStatus.CREATING_PICTURE:
 			info.append(random.choice(msg_draw).replace("%s", game.activePlayer))
 	if len(info) == 0:
-		return random.choice([
+		return "<span style='color: red;'>" + random.choice([
 			"Uh oh, nobody is doing anything right now...",
 			"Oops, everyone else is also just sitting around...",
 			"Nothing interesting is happening right now...",
 			"Uh oh, nothing is actually happening right now...",
 			"It looks like nothing's going on right now...",
 			"Everyone else is also bored...",
-			"Something went wrong...",
-			"I feel like something is not happening..."
-		])
+			"Something went wrong here..."
+		]) + '</span>'
 	else:
 		return random.choice(info)
 
@@ -310,10 +308,11 @@ def get(path, query: URLQuery):
 	<head>
 		<title>Results</title>
 		<link href="main.css" rel="stylesheet" type="text/css" />
+		<link href="results.css" rel="stylesheet" type="text/css" />
 	</head>
 	<body>
 		<h1>Results</h1>
-		{''.join([f"<h2 style='background:black;color:white;margin:1em;padding:1em;border-radius:1em;'><i>Game #{i + 1}</i></h2>{g.resultHTML()}" for i, g in enumerate(activeGames)])}
+		{''.join([f"<h2><i>Game #{i + 1}</i></h2>{g.resultHTML()}" for i, g in enumerate(activeGames)])}
 	</body>
 </html>"""
 			}
@@ -328,6 +327,7 @@ def get(path, query: URLQuery):
 		if query.get("name") not in users:
 			users.append(query.get("name"))
 			activeGames.append(Game())
+			print('!!!', path, query.orig)
 		hasAnyActiveGames = False
 		for g in range(len(activeGames)):
 			if activeGames[g].status in [GameStatus.WAITING_FOR_FIRST_WORD, GameStatus.NEEDS_PICTURE, GameStatus.NEEDS_WORD]:
@@ -403,8 +403,17 @@ def post(path, body):
 			"content": "404"
 		}
 
+rs = []
 class MyServer(BaseHTTPRequestHandler):
 	def do_GET(self):
+		zzz = [*self.path]
+		if len(zzz) > 1:
+			if zzz[1] in [*"0123456789"]:
+				zzz[1] = "#"
+		zzz = ''.join(zzz)
+		if zzz not in rs:
+			print(zzz)
+			rs.append(zzz)
 		splitpath = self.path.split("?")
 		res: "dict" = get(splitpath[0], URLQuery(''.join(splitpath[1:]))) # type: ignore
 		self.send_response(res["status"])
@@ -494,7 +503,7 @@ def async_manager():
 		# Flip
 		maxwidth = max([len(l) for l in res.split("\n")])
 		e = f"\n=={'=' * maxwidth}=="
-		print('\n'.join([f'| {l.ljust(maxwidth)} |' for l in res.split('\n')]) + e)
+		#print('\n'.join([f'| {l.ljust(maxwidth)} |' for l in res.split('\n')]) + e)
 		time.sleep(1)
 
 if __name__ == "__main__":
@@ -515,7 +524,6 @@ if __name__ == "__main__":
 	jsonr = []
 	for g in range(len(activeGames)):
 		res = repr(activeGames[g])
-		print(f"\nGame {g}:{res}")
 		jsonr.append(activeGames[g].history)
 	n = 1
 	while os.path.isfile(f"logs/game_{n}.json"): n += 1
