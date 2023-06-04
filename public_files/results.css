@@ -1,0 +1,13 @@
+h2 {
+	background: black;
+	color: white;
+	margin: 1em;
+	padding: 1em;
+	border-radius: 1em;
+}
+h3 {
+	font-size: 1em;
+	border-left: 2px solid black;
+	margin: 1em;
+	padding: 1em;
+}
