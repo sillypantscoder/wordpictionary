@@ -295,8 +295,61 @@ def getGameInfo():
 		return random.choice(info)
 
 users = []
+pwd = ''.join([random.choice([*"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"]) for x in range(5)])
+pending = []
 def get(path, query: URLQuery):
-	if path == "/":
+	if path == "/status" + pwd:
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/html"
+			},
+			"content": """<!DOCTYPE html>
+<html>
+	<head>
+		<title>Game Status</title>
+	</head>
+	<body>
+		<h1>Game Status</h1>
+		<div style="font-family: monospace; white-space: pre;" id="t"></div>
+		<div><input type="text" enterheyhint="send" onkeydown="if (event.key == 'Enter') sendMsg(this.value)"><button onclick="sendMsg(this.previousElementSibling.value)">Send</button></div>
+		<script>
+setInterval(() => {
+	var x = new XMLHttpRequest()
+	x.open("GET", location.pathname + "/i")
+	x.addEventListener("loadend", (e) => {
+		document.querySelector("#t").innerText = e.target.responseText
+	})
+	x.send()
+}, 1000)
+function sendMsg(t) {
+	var x = new XMLHttpRequest()
+	x.open("GET", location.pathname + "/s/" + t)
+	x.send()
+	document.querySelector("input").value = ""
+}
+		</script>
+	</body>
+</html>"""
+		}
+	elif path == "/status" + pwd + "/i":
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/plain"
+			},
+			"content": get_manager_info("")
+		}
+	elif path.startswith("/status" + pwd + "/s/"):
+		d = path[len("/status" + pwd + "/s/"):]
+		return {
+			"status": 200,
+			"headers": {
+				"Content-Type": "text/plain"
+			},
+			"content": get_manager_info(d)
+		}
+	elif path == "/":
 		if showing_results:
 			return {
 				"status": 200,
@@ -324,10 +377,28 @@ def get(path, query: URLQuery):
 				},
 				"content": read_file("public_files/login.html")
 			}
-		if query.get("name") not in users:
-			users.append(query.get("name"))
-			activeGames.append(Game())
-			print('!!!', path, query.orig)
+		if (query.get("name") not in users) and (query.get("name") not in pending):
+			pending.append(query.get("name"))
+		if query.get("name") in pending:
+			return {
+				"status": 200,
+				"headers": {
+					"Content-Type": "text/html"
+				},
+				"content": """<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Waiting</title>
+		<script>setTimeout(() => { location.reload() }, 3000)</script>
+		<link href="main.css" rel="stylesheet" type="text/css" />
+		<link href="wait.css" rel="stylesheet" type="text/css" />
+		<link rel="icon" type="image/x-icon" href="wait.ico">
+	</head>
+	<body>
+		<p>Wait to join the game</p>
+	</body>
+	</html>"""
+			}
 		hasAnyActiveGames = False
 		for g in range(len(activeGames)):
 			if activeGames[g].status in [GameStatus.WAITING_FOR_FIRST_WORD, GameStatus.NEEDS_PICTURE, GameStatus.NEEDS_WORD]:
@@ -388,6 +459,7 @@ def get(path, query: URLQuery):
 		}
 
 def post(path, body):
+	print("POST", path, body)
 	if path.split("/")[1].isdigit():
 		gamepath = "/".join(path.split("/")[2:])
 		#print(f"POST to game {path.split('/')[1]} at /{gamepath}")
@@ -412,8 +484,9 @@ class MyServer(BaseHTTPRequestHandler):
 				zzz[1] = "#"
 		zzz = ''.join(zzz)
 		if zzz not in rs:
-			print(zzz)
-			rs.append(zzz)
+			if not zzz.startswith("/status"):
+				print(zzz)
+			#rs.append(zzz)
 		splitpath = self.path.split("?")
 		res: "dict" = get(splitpath[0], URLQuery(''.join(splitpath[1:]))) # type: ignore
 		self.send_response(res["status"])
@@ -440,71 +513,63 @@ class MyServer(BaseHTTPRequestHandler):
 		# don't output requests
 
 showing_results = False
-def async_manager():
+def get_manager_info(in_ch):
 	global running
 	global showing_results
-	# Get char
-	chars = []
-	def getChar():
-		if len(chars) > 0:
-			return chars.pop()
-		else:
-			return ''
-	def async_get_chars():
-		while running:
-			chars.append(input())
-			if "x" in [x.lower() for x in chars]:
-				return;
-	threading.Thread(target=async_get_chars, name="pygame_get_chars_thread", args=[]).start()
-	# Main loop
-	running = True
-	while running:
-		curchar = getChar().lower()
-		res = ""
-		# LIST OF GAMES
-		for i in [[x, activeGames[x]] for x in range(len(activeGames))]:
-			res += f"({i[0] + 1} d/i/r) Game {i[0] + 1} status: {i[1].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][i[1].status]}) player: {i[1].activePlayer}\n"
-			if curchar == str(i[0] + 1) + "d":
-				i[1].status -= 1
-				if i[1].status < 0: i[1].status += 4
-			if curchar == str(i[0] + 1) + "i":
-				i[1].status += 1
-				if i[1].status >= 4: i[1].status -= 4
-			if curchar == str(i[0] + 1) + "r":
-				activeGames.remove(i[1])
-		# DECREMENT ALL OPTION
-		res += f"\n(D d/i) Change all games' status\n"
-		if curchar == "dd":
-			for g in range(len(activeGames)):
-				activeGames[g].status -= 1
-				if activeGames[g].status < 0: activeGames[g].status += 4
-		if curchar == "di":
-			for g in range(len(activeGames)):
-				activeGames[g].status += 1
-				if activeGames[g].status >= 4: activeGames[g].status -= 4
-		# USER LIST
-		res += f"Users:\n"
-		for u in [[x, users[x]] for x in range(len(users))]:
-			res += f"  (u{u[0] + 1}) {unquote(u[1])}\n"
-			if curchar == "u" + str(u[0] + 1):
-				users.remove(u[1])
-		# CLOSE WINDOW MESSAGE
-		res += f"(X) Stop the server\n"
-		if curchar == "x":
-			running = False
-		# CLOSE WINDOW MESSAGE
-		res += f"(N) New game\n"
-		if curchar == "n":
+	res = ""
+	# LIST OF GAMES
+	for i in [[x, activeGames[x]] for x in range(len(activeGames))]:
+		res += f"({i[0] + 1} d/i/r) Game {i[0] + 1} status: {i[1].status} ({['Waiting to start', 'Waiting for 1st word', 'Needs picture', 'Creating picture', 'Needs word', 'Creating word'][i[1].status]}) player: {i[1].activePlayer}\n"
+		if in_ch == str(i[0] + 1) + "d":
+			i[1].status -= 1
+			if i[1].status < 0: i[1].status += 4
+		if in_ch == str(i[0] + 1) + "i":
+			i[1].status += 1
+			if i[1].status >= 4: i[1].status -= 4
+		if in_ch == str(i[0] + 1) + "r":
+			activeGames.remove(i[1])
+	# DECREMENT ALL OPTION
+	res += f"\n(d d/i) Change all games' status\n"
+	if in_ch == "dd":
+		for g in range(len(activeGames)):
+			activeGames[g].status -= 1
+			if activeGames[g].status < 0: activeGames[g].status += 4
+	if in_ch == "di":
+		for g in range(len(activeGames)):
+			activeGames[g].status += 1
+			if activeGames[g].status >= 4: activeGames[g].status -= 4
+	# USER LIST
+	res += f"Registered users:\n"
+	for u in [[x, users[x]] for x in range(len(users))]:
+		res += f"  (u{u[0] + 1}) {unquote(u[1])}\n"
+		if in_ch == "u" + str(u[0] + 1):
+			users.remove(u[1])
+	res += f"Pending users:\n"
+	for u in [[x, pending[x]] for x in range(len(pending))]:
+		res += f"  (p{u[0] + 1} a/d) {unquote(u[1])}\n"
+		if in_ch == "p" + str(u[0] + 1) + "d":
+			pending.remove(u[1])
+		if in_ch == "p" + str(u[0] + 1) + "a":
+			pending.remove(u[1])
+			users.append(u[1])
 			activeGames.append(Game())
-		# SHOW RESULTS OPTION
-		res += f"(S) Show results: {'Yes' if showing_results else 'No'}\n"
-		if curchar == "s":
-			showing_results = not showing_results
-		# Flip
-		maxwidth = max([len(l) for l in res.split("\n")])
-		e = f"\n=={'=' * maxwidth}=="
-		#print('\n'.join([f'| {l.ljust(maxwidth)} |' for l in res.split('\n')]) + e)
-		time.sleep(1)
+	# CLOSE WINDOW MESSAGE
+	res += f"(x) Stop the server\n"
+	if in_ch == "x":
+		running = False
+	# CLOSE WINDOW MESSAGE
+	res += f"(n) New game\n"
+	if in_ch == "n":
+		activeGames.append(Game())
+	# SHOW RESULTS OPTION
+	res += f"(s) Show results: {'Yes' if showing_results else 'No'}\n"
+	if in_ch == "s":
+		showing_results = not showing_results
+	# Flip
+	maxwidth = max([len(l) for l in res.split("\n")])
+	e = f"\n=={'=' * maxwidth}=="
+	info = e + '\n' + '\n'.join([f'| {l.ljust(maxwidth)} |' for l in res.split('\n')]) + e
+	return info
 
 if __name__ == "__main__":
 	running = True
@@ -512,7 +577,7 @@ if __name__ == "__main__":
 	webServer = HTTPServer((hostName, serverPort), MyServer)
 	webServer.timeout = 1
 	print("Server started http://%s:%s" % (hostName, serverPort))
-	threading.Thread(target=async_manager).start()
+	print("Status pwd:", pwd)
 	while running:
 		try:
 			webServer.handle_request()
