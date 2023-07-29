@@ -38,6 +38,13 @@ class Game:
 		self.activePlayer = None
 	def get(self, path, query, gameno):
 		if path == "/check":
+			if query.get("name") not in users: return {
+				"status": 303,
+				"headers": {
+					"Location": f"/?" + query.orig
+				},
+				"content": ""
+			}
 			# Check for game status openings
 			if self.status == GameStatus.WAITING_FOR_FIRST_WORD:
 				return {
@@ -295,10 +302,10 @@ def getGameInfo():
 		return random.choice(info)
 
 users = []
-pwd = ''.join([random.choice([*"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"]) for x in range(5)])
+pwd = ''.join([random.choice([*"abcdefghijklmnpqrstuvwxyz0123456789"]) for x in range(4)])
 pending = []
 def get(path, query: URLQuery):
-	if path == "/status" + pwd:
+	if path == "/status_" + pwd:
 		return {
 			"status": 200,
 			"headers": {
@@ -316,7 +323,7 @@ def get(path, query: URLQuery):
 		<script>
 setInterval(() => {
 	var x = new XMLHttpRequest()
-	x.open("GET", location.pathname + "/i")
+	x.open("GET", location.pathname + "/s/")
 	x.addEventListener("loadend", (e) => {
 		document.querySelector("#t").innerText = e.target.responseText
 	})
@@ -332,16 +339,8 @@ function sendMsg(t) {
 	</body>
 </html>"""
 		}
-	elif path == "/status" + pwd + "/i":
-		return {
-			"status": 200,
-			"headers": {
-				"Content-Type": "text/plain"
-			},
-			"content": get_manager_info("")
-		}
-	elif path.startswith("/status" + pwd + "/s/"):
-		d = path[len("/status" + pwd + "/s/"):]
+	elif path.startswith("/status_" + pwd + "/s/"):
+		d = path[len("/status_" + pwd + "/s/"):]
 		return {
 			"status": 200,
 			"headers": {
