@@ -34,8 +34,8 @@ class GameStatus:
 class Game:
 	def __init__(self):
 		self.history = []
-		self.status = GameStatus.WAITING_TO_START
-		self.activePlayer = None
+		self.status: int = GameStatus.WAITING_TO_START
+		self.activePlayer: str | None = None
 	def get(self, path, query, gameno):
 		if path == "/check":
 			if query.get("name") not in users: return {
@@ -302,7 +302,7 @@ def getGameInfo():
 		return random.choice(info)
 
 users = []
-pwd = ''.join([random.choice([*"abcdefghijklmnpqrstuvwxyz0123456789"]) for x in range(4)])
+pwd = ''.join([random.choice([*"ABCDEFGHIJKLMNPQRSTUVWXYZ0123456789"]) for x in range(4)])
 pending = []
 def get(path, query: URLQuery):
 	if path == "/status_" + pwd:
@@ -388,7 +388,7 @@ function sendMsg(t) {
 	<html>
 	<head>
 		<title>Waiting</title>
-		<script>setTimeout(() => { location.reload() }, 3000)</script>
+		<script>setTimeout(() => location.reload(), 3000)</script>
 		<link href="main.css" rel="stylesheet" type="text/css" />
 		<link href="wait.css" rel="stylesheet" type="text/css" />
 		<link rel="icon" type="image/x-icon" href="wait.ico">
